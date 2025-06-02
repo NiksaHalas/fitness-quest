@@ -1,61 +1,88 @@
-// backend/src/controllers/missionController.js (primer, možeš dodati prave podatke iz baze)
+// backend/src/controllers/missionController.js
+// Autor: Tvoje Ime
+// Datum: 02.06.2025.
+// Svrha: Kontroleri za upravljanje misijama (dohvatanje, kompletiranje, kreiranje).
+
 const asyncHandler = require('express-async-handler');
-const Mission = require('../models/Mission'); // Pretpostavljam da imaš Mission model
+const Mission = require('../models/Mission'); // Uvezi Mission model
+const User = require('../models/User');     // Uvezi User model (za ažuriranje XP-a)
 
 // @desc    Dohvati sve misije
 // @route   GET /api/missions
 // @access  Private
 const getMissions = asyncHandler(async (req, res) => {
-    // Za početak, možemo vratiti hardkodovane misije ili prave iz baze
-    // Kasnije možeš da filtriraš po korisniku, dnevnim misijama itd.
-    const missions = await Mission.find({}); // Dohvati sve misije iz baze
+    let missions = await Mission.find({}); // Pokušaj da dohvatiš misije iz baze
 
-    // Ako baza nema misija, dodaj par dummy misija za test
+    // Ako baza nema misija, kreiraj i sačuvaj dummy misije
     if (missions.length === 0) {
-        // Ovo je samo za demonstraciju, inače bi misije dodavao preko admin panela
         const dummyMissions = [
-            { name: 'Dnevna Misija: 30 čučnjeva', description: 'Uradi 30 čučnjeva.', xpReward: 10, type: 'daily', isCompleted: false },
-            { name: 'Vežba Snage: 50 sklekova', description: 'Uradi 50 sklekova u jednom danu.', xpReward: 25, type: 'weekly', isCompleted: false },
-            { name: 'Kardio Izazov: 30 min trčanja', description: 'Trči 30 minuta bez prestanka.', xpReward: 20, type: 'daily', isCompleted: false },
+            { name: 'Dnevna Misija: 30 čučnjeva', description: 'Uradi 30 čučnjeva.', xpReward: 10, type: 'daily' },
+            { name: 'Vežba Snage: 50 sklekova', description: 'Uradi 50 sklekova u jednom danu.', xpReward: 25, type: 'weekly' },
+            { name: 'Kardio Izazov: 30 min trčanja', description: 'Trči 30 minuta bez prestanka.', xpReward: 20, type: 'daily' },
+            { name: 'Meditacija: 15 minuta', description: 'Posvetite 15 minuta meditaciji ili vežbama disanja.', xpReward: 15, type: 'daily' },
+            { name: 'Hidratacija: 2L vode', description: 'Popij 2 litre vode tokom dana.', xpReward: 5, type: 'daily' },
         ];
-        // Možeš ih i sačuvati u bazu ako želiš da budu trajne
-        // await Mission.insertMany(dummyMissions);
-        // res.status(200).json(dummyMissions);
-        res.status(200).json(dummyMissions); // Vrati dummy misije bez snimanja
-    } else {
-        res.status(200).json(missions);
+        
+        // Sačuvaj dummy misije u bazu
+        missions = await Mission.insertMany(dummyMissions);
+        console.log('Dummy misije kreirane i sačuvane u bazi.');
     }
+
+    // Sada kada smo sigurni da misije postoje u bazi, dohvati ih ponovo
+    // ili koristi već dohvaćene ako su upravo kreirane.
+    // Za demo, pretpostavljamo da su sve misije dostupne i da se isCompleted status prati na frontendu
+    // ili u nekom drugom modelu (npr. UserMissionStatus).
+    // Za sada, isCompleted je default false u Mission modelu.
+    res.status(200).json(missions);
 });
 
 // @desc    Kompletiraj misiju
 // @route   POST /api/missions/complete/:id
 // @access  Private
 const completeMission = asyncHandler(async (req, res) => {
-    const missionId = req.params.id;
-    const userId = req.user._id; // ID prijavljenog korisnika
+    const missionId = req.params.id; // ID misije iz URL-a
+    const userId = req.user._id;     // ID prijavljenog korisnika iz auth middleware-a
 
+    // Pronađi misiju u bazi
     const mission = await Mission.findById(missionId);
+
     if (!mission) {
         res.status(404);
-        throw new Error('Misija nije pronađena');
+        throw new Error('Misija nije pronađena.');
     }
 
-    // Proveriti da li je misija već kompletirana od strane korisnika,
-    // i da li korisnik ima pravo da je kompletira (npr. samo jednom dnevno)
-    // Za sada samo simuliramo uspeh
+    // Pronađi korisnika
     const user = await User.findById(userId);
-    if (user) {
-        user.xp += mission.xpReward; // Dodaj XP
-        // Logika za level up ako je potrebno
-        if (user.xp >= (user.level * 100)) { // Primer: 100 XP po nivou
-            user.level += 1;
-            user.xp = user.xp - ((user.level -1) * 100); // Resetuj XP za novi nivo
-        }
-        await user.save();
+
+    if (!user) {
+        res.status(404);
+        throw new Error('Korisnik nije pronađen.');
     }
 
+    // Ažuriraj korisnikov XP
+    user.xp = (user.xp || 0) + mission.xpReward;
 
-    res.status(200).json({ message: `Misija "${mission.name}" kompletirana! Dobio si ${mission.xpReward} XP.`, xpGained: mission.xpReward });
+    // Logika za level up
+    // Pretpostavljamo da je za svaki nivo potrebno 100 XP
+    // Ovo se može prilagoditi (npr. eksponencijalno povećanje XP-a po nivou)
+    const xpNeededForNextLevel = user.level * 100; // Primer: 100 XP za nivo 1, 200 za nivo 2, itd.
+    if (user.xp >= xpNeededForNextLevel) {
+        user.level += 1;
+        user.xp -= xpNeededForNextLevel; // Oduzmi XP potreban za prethodni nivo
+        // Ažuriraj xpNeededForNextLevel u User modelu ako je potrebno
+        // user.xpToNextLevel = (user.level + 1) * 100;
+    }
+
+    await user.save(); // Sačuvaj ažuriranog korisnika u bazi
+
+    // Opciono: Ažurirati status misije za korisnika (npr. u zasebnoj kolekciji UserMissionStatus)
+    // Za sada, samo vraćamo poruku o uspehu i ažurirani XP.
+
+    res.status(200).json({
+        message: `Misija "${mission.name}" kompletirana! Dobio si ${mission.xpReward} XP.`,
+        userXp: user.xp,
+        userLevel: user.level
+    });
 });
 
 // @desc    Kreiraj novu misiju (Opciono, samo za admina)
@@ -79,7 +106,6 @@ const createMission = asyncHandler(async (req, res) => {
 
     res.status(201).json(mission);
 });
-
 
 module.exports = {
     getMissions,

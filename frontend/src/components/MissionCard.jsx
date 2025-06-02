@@ -1,4 +1,3 @@
- 
 // frontend/src/components/MissionCard.jsx
 // Autor: Tvoje Ime
 // Datum: 02.06.2025.
@@ -6,10 +5,10 @@
 
 import React from 'react';
 import { Card, CardContent, Typography, Button, Box } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Primer ikone
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // PROVERI DA LI JE OVAJ IMPORT ISPRAVAN I POSTOJI
 
 const MissionCard = ({ mission, onCompleteMission }) => {
-  const { name, description, xpReward, type, isCompleted } = mission;
+  const { name, description, xpReward, isCompleted } = mission; // IZMENJENO: Uklonjen 'type' iz destrukturiranja jer nije korišćen
 
   return (
     <Card sx={{ maxWidth: 345, m: 2, boxShadow: 3, borderRadius: '8px' }}>

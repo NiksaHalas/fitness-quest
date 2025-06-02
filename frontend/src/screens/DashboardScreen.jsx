@@ -4,7 +4,7 @@
 // Svrha: Glavni dashboard za prijavljenog korisnika, prikazuje XP, Avatar, Misije, Statistiku.
 
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Typography, CircularProgress, Alert, Paper } from '@mui/material';
+import { Box, Grid, Typography, CircularProgress, Alert, Paper, Container } from '@mui/material';
 import XPBar from '../components/XPBar';
 import AvatarDisplay from '../components/AvatarDisplay';
 import MissionCard from '../components/MissionCard';
@@ -13,8 +13,11 @@ import axios from 'axios';
 
 const DashboardScreen = () => {
   // Stanja za podatke korisnika, misije, loading i greške
-  const [userInfo, setUserInfo] = useState(null); // Ovde će biti podaci o korisniku
+  const [userInfo, setUserInfo] = useState(null);
   const [missions, setMissions] = useState([]);
+  const [activities, setActivities] = useState([]); // DODATO: Stanje za aktivnosti
+  const [diaryEntries, setDiaryEntries] = useState([]); // DODATO: Stanje za unose u dnevnik
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,14 +41,20 @@ const DashboardScreen = () => {
         };
 
         // Dohvatanje podataka o korisniku (npr. nivo, xp)
-        // Pretpostavljamo da imate /api/user/profile rutu
         const { data: userData } = await axios.get('http://localhost:5000/api/user/profile', config);
         setUserInfo(userData);
 
         // Dohvatanje misija
-        // Pretpostavljamo da imate /api/missions rutu
         const { data: missionsData } = await axios.get('http://localhost:5000/api/missions', config);
         setMissions(missionsData);
+
+        // DODATO: Dohvatanje unosa iz dnevnika
+        const { data: diaryData } = await axios.get('http://localhost:5000/api/diary', config);
+        setDiaryEntries(diaryData);
+
+        // Za sada nemamo posebnu rutu za aktivnosti, ali bismo je dodali ovde
+        // const { data: activitiesData } = await axios.get('http://localhost:5000/api/activities', config);
+        // setActivities(activitiesData);
 
         setLoading(false);
       } catch (err) {
@@ -58,7 +67,7 @@ const DashboardScreen = () => {
     };
 
     fetchUserData();
-  }, []); // Prazan niz znači da se efekat pokreće samo jednom, pri montiranju komponente
+  }, []);
 
   const handleCompleteMission = async (missionId) => {
     try {
@@ -70,27 +79,21 @@ const DashboardScreen = () => {
         },
       };
 
-      // Poziv backend rute za kompletiranje misije
       await axios.post(`http://localhost:5000/api/missions/complete/${missionId}`, {}, config);
 
-      // Ažuriranje UI-ja: označi misiju kao kompletnu i ažuriraj XP
       setMissions(prevMissions =>
         prevMissions.map(mission =>
           mission._id === missionId ? { ...mission, isCompleted: true } : mission
         )
       );
-      // Opcionalno: ponovo dohvati korisničke podatke da bi se XP odmah ažurirao
-      // Ovde bi trebalo da dohvatite nove podatke o korisniku sa servera da se ažurira XP bar
-      // const { data: updatedUserData } = await axios.get('http://localhost:5000/api/user/profile', config);
-      // setUserInfo(updatedUserData);
 
-      // Privremeno manuelno azuriranje XP-a za demo
-      setUserInfo(prevInfo => ({
-        ...prevInfo,
-        xp: prevInfo.xp + missions.find(m => m._id === missionId).xpReward
-      }));
-
-      // Možeš dodati neku poruku uspeha ovde
+      const completedMission = missions.find(m => m._id === missionId);
+      if (completedMission) {
+        setUserInfo(prevInfo => ({
+          ...prevInfo,
+          xp: prevInfo.xp + completedMission.xpReward
+        }));
+      }
     } catch (err) {
       console.error("Greška pri kompletiranju misije:", err);
       setError(err.response && err.response.data.message
@@ -116,7 +119,6 @@ const DashboardScreen = () => {
     );
   }
 
-  // Ako su podaci učitani, prikaži dashboard
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
@@ -124,13 +126,13 @@ const DashboardScreen = () => {
       </Typography>
       <Grid container spacing={3}>
         {/* Kolona za Avatar i XP Bar */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: 3, borderRadius: '8px' }}>
             {userInfo && <AvatarDisplay level={userInfo.level || 1} />}
             {userInfo && <XPBar
               currentXp={userInfo.xp || 0}
               level={userInfo.level || 1}
-              xpToNextLevel={userInfo.xpToNextLevel || 100} // Pretpostavi 100 XP za sledeći nivo
+              xpToNextLevel={userInfo.xpToNextLevel || 100}
             />}
           </Paper>
         </Grid>
@@ -161,7 +163,7 @@ const DashboardScreen = () => {
 
         {/* Kolona za Statistiku (puna širina ispod) */}
         <Grid item xs={12}>
-          <StatsDashboard userData={userInfo} />
+          <StatsDashboard userData={userInfo} activities={activities} diaryEntries={diaryEntries} /> {/* PROSLEDJENO: activities, diaryEntries */}
         </Grid>
 
       </Grid>

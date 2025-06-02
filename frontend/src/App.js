@@ -4,15 +4,16 @@
 // Svrha: Glavna komponenta aplikacije sa rutiranjem i osnovnim rasporedom.
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Uvezi komponente koje ces kreirati/koristiti
+// Uvezi komponente
 import RegisterScreen from './screens/RegisterScreen';
 import LoginScreen from './screens/LoginScreen';
-import DashboardScreen from './screens/DashboardScreen'; // Dodato
-import PrivateRoute from './components/hoc/PrivateRoute'; // Dodato
+import DashboardScreen from './screens/DashboardScreen';
+import DiaryScreen from './screens/DiaryScreen'; // DODATO: Uvezi DiaryScreen
+import PrivateRoute from './components/hoc/PrivateRoute';
 
 // Primer kreiranja osnovne MUI teme
 const theme = createTheme({
@@ -27,32 +28,26 @@ const theme = createTheme({
 });
 
 function App() {
-  const navigate = useNavigate(); // Hook za navigaciju (koristi se unutar Router-a)
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Stanje za praćenje prijave
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Proveri status prijave pri učitavanju aplikacije i kada se promeni localStorage
   useEffect(() => {
     const checkLoginStatus = () => {
       const userInfo = localStorage.getItem('userInfo');
-      setIsLoggedIn(!!userInfo); // Ako userInfo postoji, isLoggedIn je true
+      setIsLoggedIn(!!userInfo);
     };
 
-    // Proveri status pri učitavanju
     checkLoginStatus();
-
-    // Dodaj event listener za 'storage' event da reaguje na promene u localStorage-u (npr. odjava)
     window.addEventListener('storage', checkLoginStatus);
-
-    // Očisti event listener pri unmount-ovanju
     return () => {
       window.removeEventListener('storage', checkLoginStatus);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('userInfo'); // Obriši token iz localStorage-a
-    setIsLoggedIn(false); // Ažuriraj stanje
-    navigate('/login'); // Preusmeri na stranicu za prijavu
+    localStorage.removeItem('userInfo');
+    setIsLoggedIn(false);
+    navigate('/login');
   };
 
   return (
@@ -71,6 +66,9 @@ function App() {
               <>
                 <Button color="inherit" component={Link} to="/dashboard">
                   Dashboard
+                </Button>
+                <Button color="inherit" component={Link} to="/diary"> {/* DODATO: Link za Dnevnik */}
+                  Dnevnik
                 </Button>
                 <Button color="inherit" onClick={handleLogout}>
                   Odjava
@@ -94,7 +92,6 @@ function App() {
           <Routes>
             <Route path="/register" element={<RegisterScreen />} />
             <Route path="/login" element={<LoginScreen />} />
-            {/* Početna stranica */}
             <Route path="/" element={
               <Box
                 sx={{
@@ -123,12 +120,20 @@ function App() {
                 )}
               </Box>
             } />
-            {/* Zaštićena ruta za Dashboard */}
+            {/* Zaštićene rute */}
             <Route
               path="/dashboard"
               element={
                 <PrivateRoute>
                   <DashboardScreen />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/diary" // DODATO: Ruta za Dnevnik
+              element={
+                <PrivateRoute>
+                  <DiaryScreen />
                 </PrivateRoute>
               }
             />

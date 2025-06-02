@@ -1,30 +1,34 @@
 // backend/src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
+const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 
-const protect = async (req, res, next) => {
-    let token;
+const protect = asyncHandler(async (req, res, next) => {
+  let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            // Uzmi token iz headera
-            token = req.headers.authorization.split(' ')[1];
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      // Get token from header
+      token = req.headers.authorization.split(' ')[1];
 
-            // Verifikuj token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Pronađi korisnika po ID-u iz tokena i dodaj ga u request objekat
-            req.user = await User.findById(decoded.id).select('-password');
-            next();
-        } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: 'Nije autorizovano, token nevažeći' });
-        }
+      // Get user from the token
+      req.user = await User.findById(decoded.id).select('-password'); // Očekuje da JWT payload ima 'id' polje
+
+      next(); // Nastavi na sledeći middleware ili ruter
+    } catch (error) {
+      console.error(error);
+      res.status(401);
+      throw new Error('Niste autorizovani, token nije uspeo');
     }
+  }
 
-    if (!token) {
-        res.status(401).json({ message: 'Nije autorizovano, token nije pronađen' });
-    }
-};
+  if (!token) {
+    res.status(401);
+    throw new Error('Niste autorizovani, nema tokena');
+  }
+});
 
 module.exports = protect;

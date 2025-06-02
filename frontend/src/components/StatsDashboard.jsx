@@ -1,4 +1,3 @@
- 
 // frontend/src/components/StatsDashboard.jsx
 // Autor: Tvoje Ime
 // Datum: 02.06.2025.
@@ -10,14 +9,14 @@ import { Box, Typography, Paper, Grid } from '@mui/material';
 // import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const StatsDashboard = ({ userData, activities, diaryEntries }) => {
-  // Primer dummy podataka za graf
-  const xpChartData = [
-    { name: 'Dan 1', xp: 50 },
-    { name: 'Dan 2', xp: 70 },
-    { name: 'Dan 3', xp: 60 },
-    { name: 'Dan 4', xp: 90 },
-    { name: 'Dan 5', xp: 80 },
-  ];
+  // Primer dummy podataka za graf (ova varijabla se ne koristi, pa smo je komentarisali ili uklonili)
+  // const xpChartData = [
+  //   { name: 'Dan 1', xp: 50 },
+  //   { name: 'Dan 2', xp: 70 },
+  //   { name: 'Dan 3', xp: 60 },
+  //   { name: 'Dan 4', xp: 90 },
+  //   { name: 'Dan 5', xp: 80 },
+  // ];
 
   return (
     <Box sx={{ my: 3, p: 3, backgroundColor: '#f5f5f5', borderRadius: '8px', boxShadow: 2 }}>
