@@ -1,42 +1,43 @@
- 
 // backend/src/models/Mission.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Mongoose model za misije.
+
 const mongoose = require('mongoose');
 
-const MissionSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true
+const missionSchema = mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        description: {
+            type: String,
+            required: true,
+        },
+        xpReward: {
+            type: Number,
+            required: true,
+            default: 10, // Podrazumevana XP nagrada
+        },
+        isDaily: {
+            type: Boolean,
+            default: false,
+        },
+        completedBy: [ // KLJUČNA PROMENA: Definisano kao niz ObjectId-ja korisnika
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+            },
+        ],
+        // Dodaj druga polja ako su potrebna (npr. category, prerequisites, etc.)
     },
-    description: {
-        type: String,
-        required: true
-    },
-    xpReward: {
-        type: Number,
-        required: true
-    },
-    type: { // 'daily' ili 'weekly'
-        type: String,
-        enum: ['daily', 'weekly'],
-        required: true
-    },
-    isCompleted: { // Da li je misija kompletirana za datog korisnika u tekućem periodu
-        type: Boolean,
-        default: false
-    },
-    lastCompleted: { // Kada je misija poslednji put kompletirana (za resetovanje)
-        type: Date
-    },
-    category: {
-        type: String,
-        enum: ['strength', 'cardio', 'flexibility', 'nutrition', 'mindfulness'], // Primer kategorija
-        default: 'strength'
-    },
-    // Referenca na korisnika za koga je misija vezana (ako su misije specifične za korisnike)
-    // Ako su misije globalne, ali se status completion prati po korisniku, ovo može biti u User modelu
-    // Za sada, pretpostavljamo da će se isCompleted i lastCompleted pratiti unutar User objekta,
-    // ili u zasebnom junction modelu (UserMissionStatus) ako su misije fiksne.
-    // Za jednostavnost, držimo ih kao fiksne misije, a user će imati referencu na completed ones.
-});
+    {
+        timestamps: true,
+    }
+);
 
-module.exports = mongoose.model('Mission', MissionSchema);
+const Mission = mongoose.model('Mission', missionSchema);
+
+module.exports = Mission;

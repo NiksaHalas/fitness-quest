@@ -1,11 +1,17 @@
-// backend/src/routes/missionRoutes.js (proveri da li je ovakav)
+// backend/src/routes/missionRoutes.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Rute za upravljanje misijama.
+
 const express = require('express');
-const { getMissions, createMission, completeMission } = require('../controllers/missionController'); // Proveri funkcije
-const protect = require('../middleware/authMiddleware');
+const { getMissions, completeMission } = require('../controllers/missionController'); // KLJUČNO: Proveri da li su funkcije ispravno destrukturirane
+const protect = require('../middleware/authMiddleware'); // Za zaštitu ruta
 const router = express.Router();
 
-router.get('/', protect, getMissions); // Ruta za dohvatanje svih misija, zaštićena
-router.post('/', protect, createMission); // Ruta za kreiranje misije (admin, ako postoji)
-router.post('/complete/:id', protect, completeMission); // Ruta za kompletiranje misije
+// Ruta za dohvatanje svih misija
+router.get('/', protect, getMissions);
+
+// Ruta za kompletiranje misije
+router.post('/complete/:id', protect, completeMission); // OVO JE LINIJA KOJA JE IZAZVALA GREŠKU
 
 module.exports = router;

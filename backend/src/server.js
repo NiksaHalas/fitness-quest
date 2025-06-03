@@ -3,50 +3,32 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
-
-// Učitaj .env varijable na samom početku, pre nego što se pokušaju koristiti
-dotenv.config();
-
-// Importovanje funkcije za povezivanje sa bazom iz zasebnog fajla
-// Ovo je ispravan način da je koristis kada je connectDB u config/db.js
 const connectDB = require('./config/db');
 
-// Pozovi funkciju za povezivanje sa bazom
-connectDB(); // Ovo ce se povezati sa bazom
+dotenv.config(); // Učitaj .env promenljive što je ranije moguće
+
+connectDB(); // Poveži se sa bazom podataka
 
 const app = express();
 
 // Middleware
-app.use(express.json()); // Za parsiranje JSON request body-ja
-app.use(cors()); // Omogući CORS za komunikaciju sa frontendom
-
-// !!! VAŽNO: OVDE SI IMAO DUPLU DEKLARACIJU connectDB FUNKCIJE
-// !!! I DRUGI POZIV connectDB(). OVO JE UKLONJENO.
-// NEMA POTREBE ZA BLOKOM KODA KOJI IZGLEDA OVAKO:
-/*
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('MongoDB povezan...');
-    } catch (err) {
-        console.error(err.message);
-        // Izlaz iz procesa u slučaju greške
-        process.exit(1);
-    }
-};
-connectDB(); // Drugi poziv, takođe nepotreban ako se koristi import
-*/
+app.use(express.json());
+app.use(cors());
 
 // Definicija ruta
 const authRoutes = require('./routes/authRoutes');
 const missionRoutes = require('./routes/missionRoutes');
 const userRoutes = require('./routes/userRoutes');
 const diaryRoutes = require('./routes/diaryRoutes');
+const reminderRoutes = require('./routes/reminderRoutes');
+const activityRoutes = require('./routes/activityRoutes'); // DODATO: Uvezi activityRoutes
 
 app.use('/api/auth', authRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/diary', diaryRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/activities', activityRoutes); // DODATO: Koristi activityRoutes
 
 // Osnovna ruta
 app.get('/', (req, res) => {

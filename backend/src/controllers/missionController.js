@@ -1,114 +1,139 @@
 // backend/src/controllers/missionController.js
 // Autor: Tvoje Ime
-// Datum: 02.06.2025.
-// Svrha: Kontroleri za upravljanje misijama (dohvatanje, kompletiranje, kreiranje).
+// Datum: 03.06.2025.
+// Svrha: Kontroleri za upravljanje misijama i logikom kompletiranja sa dodatnim logovanjem za debagovanje.
 
 const asyncHandler = require('express-async-handler');
-const Mission = require('../models/Mission'); // Uvezi Mission model
-const User = require('../models/User');     // Uvezi User model (za ažuriranje XP-a)
+const Mission = require('../models/Mission');
+const User = require('../models/User');
+const Badge = require('../models/Badge'); // Ispravna putanja za Badge model
 
-// @desc    Dohvati sve misije
+// Funkcija za izračunavanje XP-a potrebnog za sledeći nivo
+const calculateXpToNextLevel = (level) => {
+    return level * 100;
+};
+
+// @desc    Get all missions
 // @route   GET /api/missions
 // @access  Private
 const getMissions = asyncHandler(async (req, res) => {
-    let missions = await Mission.find({}); // Pokušaj da dohvatiš misije iz baze
-
-    // Ako baza nema misija, kreiraj i sačuvaj dummy misije
-    if (missions.length === 0) {
-        const dummyMissions = [
-            { name: 'Dnevna Misija: 30 čučnjeva', description: 'Uradi 30 čučnjeva.', xpReward: 10, type: 'daily' },
-            { name: 'Vežba Snage: 50 sklekova', description: 'Uradi 50 sklekova u jednom danu.', xpReward: 25, type: 'weekly' },
-            { name: 'Kardio Izazov: 30 min trčanja', description: 'Trči 30 minuta bez prestanka.', xpReward: 20, type: 'daily' },
-            { name: 'Meditacija: 15 minuta', description: 'Posvetite 15 minuta meditaciji ili vežbama disanja.', xpReward: 15, type: 'daily' },
-            { name: 'Hidratacija: 2L vode', description: 'Popij 2 litre vode tokom dana.', xpReward: 5, type: 'daily' },
-        ];
-        
-        // Sačuvaj dummy misije u bazu
-        missions = await Mission.insertMany(dummyMissions);
-        console.log('Dummy misije kreirane i sačuvane u bazi.');
-    }
-
-    // Sada kada smo sigurni da misije postoje u bazi, dohvati ih ponovo
-    // ili koristi već dohvaćene ako su upravo kreirane.
-    // Za demo, pretpostavljamo da su sve misije dostupne i da se isCompleted status prati na frontendu
-    // ili u nekom drugom modelu (npr. UserMissionStatus).
-    // Za sada, isCompleted je default false u Mission modelu.
-    res.status(200).json(missions);
+    const missions = await Mission.find({});
+    res.json(missions);
 });
 
-// @desc    Kompletiraj misiju
+// @desc    Complete a mission
 // @route   POST /api/missions/complete/:id
 // @access  Private
 const completeMission = asyncHandler(async (req, res) => {
-    const missionId = req.params.id; // ID misije iz URL-a
-    const userId = req.user._id;     // ID prijavljenog korisnika iz auth middleware-a
+    const missionId = req.params.id;
+    const userId = req.user.id;
 
-    // Pronađi misiju u bazi
+    console.log(`[DEBUG] Attempting to complete mission: ${missionId} for user: ${userId}`);
+
     const mission = await Mission.findById(missionId);
-
     if (!mission) {
+        console.error(`[DEBUG] Mission not found: ${missionId}`);
         res.status(404);
         throw new Error('Misija nije pronađena.');
     }
+    console.log(`[DEBUG] Mission found: ${mission.name}`);
 
-    // Pronađi korisnika
     const user = await User.findById(userId);
-
     if (!user) {
+        console.error(`[DEBUG] User not found: ${userId}`);
         res.status(404);
         throw new Error('Korisnik nije pronađen.');
     }
+    console.log(`[DEBUG] User found: ${user.username}, current XP: ${user.xp}, level: ${user.level}`);
 
-    // Ažuriraj korisnikov XP
-    user.xp = (user.xp || 0) + mission.xpReward;
+    // Proveri da li je misija već kompletirana od strane ovog korisnika
+    if (mission.completedBy && mission.completedBy.includes(userId)) {
+        console.warn(`[DEBUG] Mission ${missionId} already completed by user ${userId}`);
+        res.status(400);
+        throw new Error('Misija je već kompletirana.');
+    }
+    console.log(`[DEBUG] Mission not yet completed by user. Proceeding.`);
+
+    // Ažuriraj misiju: dodaj korisnika u completedBy
+    mission.completedBy.push(userId);
+    await mission.save();
+    console.log(`[DEBUG] Mission ${mission.name} updated with completedBy user.`);
+
+    // Ažuriraj korisnika: dodaj XP, proveri nivo, dodeli značke
+    user.xp += mission.xpReward;
+    user.completedMissionsCount += 1;
+
+    let xpGained = mission.xpReward;
+    let newlyAwardedBadges = [];
+    let userLevelBefore = user.level;
+
+    console.log(`[DEBUG] User XP after mission: ${user.xp}, completed missions count: ${user.completedMissionsCount}`);
 
     // Logika za level up
-    // Pretpostavljamo da je za svaki nivo potrebno 100 XP
-    // Ovo se može prilagoditi (npr. eksponencijalno povećanje XP-a po nivou)
-    const xpNeededForNextLevel = user.level * 100; // Primer: 100 XP za nivo 1, 200 za nivo 2, itd.
-    if (user.xp >= xpNeededForNextLevel) {
+    let xpRequiredForCurrentLevel = calculateXpToNextLevel(user.level);
+    console.log(`[DEBUG] Initial XP required for current level (${user.level}): ${xpRequiredForCurrentLevel}`);
+
+    while (user.xp >= xpRequiredForCurrentLevel) {
+        console.log(`[DEBUG] User XP (${user.xp}) >= XP required for level ${user.level} (${xpRequiredForCurrentLevel}). Leveling up!`);
+        user.xp -= xpRequiredForCurrentLevel;
         user.level += 1;
-        user.xp -= xpNeededForNextLevel; // Oduzmi XP potreban za prethodni nivo
-        // Ažuriraj xpNeededForNextLevel u User modelu ako je potrebno
-        // user.xpToNextLevel = (user.level + 1) * 100;
+        xpRequiredForCurrentLevel = calculateXpToNextLevel(user.level);
+        console.log(`[DEBUG] New level: ${user.level}, XP remaining: ${user.xp}, XP required for next level: ${xpRequiredForCurrentLevel}`);
+
+        // Proveri da li novi nivo donosi značku
+        const badgeForLevel = await Badge.findOne({ requiredLevel: user.level });
+        if (badgeForLevel) {
+            console.log(`[DEBUG] Found badge for new level ${user.level}: ${badgeForLevel.name}`);
+            if (!user.badges.includes(badgeForLevel._id)) {
+                user.badges.push(badgeForLevel._id);
+                newlyAwardedBadges.push(badgeForLevel);
+                console.log(`[DEBUG] Awarded new level badge: ${badgeForLevel.name}`);
+            } else {
+                console.log(`[DEBUG] User already has badge for level ${user.level}.`);
+            }
+        } else {
+            console.log(`[DEBUG] No badge found for new level ${user.level}.`);
+        }
     }
 
-    await user.save(); // Sačuvaj ažuriranog korisnika u bazi
+    // Proveri značke koje se dodeljuju na osnovu broja završenih misija
+    console.log(`[DEBUG] Checking for badges based on completed missions count (${user.completedMissionsCount}).`);
+    const badgesForCompletedMissions = await Badge.find({ requiredMissions: { $lte: user.completedMissionsCount } });
+    for (const badge of badgesForCompletedMissions) {
+        if (!user.badges.includes(badge._id)) {
+            user.badges.push(badge._id);
+            newlyAwardedBadges.push(badge);
+            console.log(`[DEBUG] Awarded new mission count badge: ${badge.name}`);
+        } else {
+            console.log(`[DEBUG] User already has badge for mission count: ${badge.name}.`);
+        }
+    }
+    console.log(`[DEBUG] Newly awarded badges (IDs): ${newlyAwardedBadges.map(b => b._id)}`);
 
-    // Opciono: Ažurirati status misije za korisnika (npr. u zasebnoj kolekciji UserMissionStatus)
-    // Za sada, samo vraćamo poruku o uspehu i ažurirani XP.
+    await user.save();
+    console.log(`[DEBUG] User saved successfully.`);
 
-    res.status(200).json({
-        message: `Misija "${mission.name}" kompletirana! Dobio si ${mission.xpReward} XP.`,
+    const xpToNextLevel = calculateXpToNextLevel(user.level);
+
+    // Popuni značke da bi se na frontendu prikazali detalji
+    const populatedBadges = await Promise.all(newlyAwardedBadges.map(async badge => {
+        return await Badge.findById(badge._id);
+    }));
+    console.log(`[DEBUG] Populated badges for response: ${populatedBadges.map(b => b.name)}`);
+
+    res.json({
+        message: 'Misija uspešno kompletirana!',
         userXp: user.xp,
-        userLevel: user.level
+        userLevel: user.level,
+        xpToNextLevel: xpToNextLevel,
+        xpGained: xpGained,
+        newlyAwardedBadges: populatedBadges,
+        userLevelBefore: userLevelBefore
     });
-});
-
-// @desc    Kreiraj novu misiju (Opciono, samo za admina)
-// @route   POST /api/missions
-// @access  Private/Admin
-const createMission = asyncHandler(async (req, res) => {
-    const { name, description, xpReward, type } = req.body;
-
-    if (!name || !description || !xpReward || !type) {
-        res.status(400);
-        throw new Error('Molimo unesite sva polja za misiju');
-    }
-
-    const mission = await Mission.create({
-        name,
-        description,
-        xpReward,
-        type,
-        isCompleted: false // Podrazumevano nije kompletirana
-    });
-
-    res.status(201).json(mission);
+    console.log(`[DEBUG] Response sent.`);
 });
 
 module.exports = {
     getMissions,
-    createMission,
     completeMission,
 };

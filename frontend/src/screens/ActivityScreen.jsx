@@ -1,8 +1,9 @@
-// frontend/src/screens/DiaryScreen.jsx
+// frontend/src/screens/ActivityScreen.jsx
 // Autor: Tvoje Ime
 // Datum: 03.06.2025.
-// Svrha: Stranica za upravljanje dnevnikom aktivnosti i osećanja sa modernim tamnim dizajnom.
+// Svrha: Stranica za upravljanje fizičkim aktivnostima korisnika sa modernim tamnim dizajnom.
 
+// ISPRAVLJENO: '=>' promenjeno u 'from'
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -23,67 +24,59 @@ import {
   DialogContent,
   DialogActions,
   Snackbar,
-  MenuItem,
+  MenuItem, // Za Select/Dropdown
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
-import { useTheme } from '@mui/material/styles'; // DODATO: useTheme
+import { useTheme } from '@mui/material/styles';
 
-// Pomoćna komponenta za prikaz pojedinačnog unosa u dnevnik
-const DiaryEntryItem = ({ entry, onEdit, onDelete }) => {
-  const theme = useTheme(); // Pristup temi
-  const formattedDate = format(parseISO(entry.date), 'dd.MM.yyyy. HH:mm');
-
-  // Boja raspoloženja
-  let moodColor = theme.palette.text.secondary;
-  switch (entry.mood) {
-    case 'Odlično': moodColor = theme.palette.primary.main; break; // Svetla ljubičasta
-    case 'Dobro': moodColor = theme.palette.secondary.main; break; // Tirkizna
-    case 'Neutralno': moodColor = theme.palette.text.secondary; break;
-    case 'Loše': moodColor = theme.palette.error.main; break;
-    case 'Užasno': moodColor = theme.palette.error.dark; break;
-    default: moodColor = theme.palette.text.secondary;
-  }
+// Pomoćna komponenta za prikaz pojedinačne aktivnosti (dodatno stilizovana)
+const ActivityItem = ({ activity, onEdit, onDelete }) => {
+  const theme = useTheme();
+  const formattedDate = format(parseISO(activity.date), 'dd.MM.yyyy. HH:mm');
 
   return (
     <ListItem divider sx={{
-      mb: 1,
-      borderRadius: '10px',
+      mb: 1.5, // Povećan razmak između stavki
+      borderRadius: '12px', // Još zaobljenije ivice
       backgroundColor: 'rgba(255,255,255,0.05)', // Suptilna pozadina
+      border: '1px solid rgba(255,255,255,0.08)', // Obrub
+      transition: 'all 0.2s ease-in-out',
+      '&:hover': {
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        transform: 'translateY(-2px)', // Blagi hover efekat
+        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+      },
       '&:last-child': { mb: 0 },
-      alignItems: 'flex-start', // Poravnanje na vrh
-      p: { xs: 1.5, md: 2 } // Responzivni padding
+      alignItems: 'flex-start',
+      p: { xs: 1.5, md: 2 }
     }}>
       <ListItemText
         primary={
           <Typography variant="h6" sx={{ fontWeight: 'medium', color: theme.palette.primary.light }}>
-            {entry.title}
+            {activity.name} ({activity.activityType})
           </Typography>
         }
         secondary={
           <>
             <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              Trajanje: {activity.duration} min | Intenzitet: {activity.intensity}
+              {activity.caloriesBurned && ` | Kalorije: ${activity.caloriesBurned}`}
+            </Typography>
+            <Typography component="span" variant="body2" color="text.primary" sx={{ display: 'block' }}>
               Datum: {formattedDate}
             </Typography>
-            <Typography component="span" variant="body2" sx={{ display: 'block', color: moodColor, fontWeight: 'bold', mb: 0.5 }}>
-              Raspoloženje: {entry.mood}
-            </Typography>
-            {entry.notes && (
-              <Typography component="span" variant="body2" color="text.primary" sx={{ display: 'block' }}>
-                Beleške: {entry.notes}
-              </Typography>
-            )}
           </>
         }
       />
-      <ListItemSecondaryAction>
-        <IconButton edge="end" aria-label="edit" onClick={() => onEdit(entry)} sx={{ color: theme.palette.secondary.light }}>
+      <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.5, sm: 1 } }}> {/* Responzivni raspored dugmadi */}
+        <IconButton edge="end" aria-label="edit" onClick={() => onEdit(activity)} sx={{ color: theme.palette.primary.main }}>
           <EditIcon />
         </IconButton>
-        <IconButton edge="end" aria-label="delete" onClick={() => onDelete(entry._id)} sx={{ color: theme.palette.error.main }}>
+        <IconButton edge="end" aria-label="delete" onClick={() => onDelete(activity._id)} sx={{ color: theme.palette.error.main }}>
           <DeleteIcon />
         </IconButton>
       </ListItemSecondaryAction>
@@ -91,26 +84,28 @@ const DiaryEntryItem = ({ entry, onEdit, onDelete }) => {
   );
 };
 
-const DiaryScreen = () => {
-  const [diaryEntries, setDiaryEntries] = useState([]);
+const ActivityScreen = () => {
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const theme = useTheme(); // Inicijalizuj temu
+  const theme = useTheme();
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [currentEntry, setCurrentEntry] = useState(null); // Za editovanje
-  const [title, setTitle] = useState('');
-  const [notes, setNotes] = useState('');
-  const [mood, setMood] = useState('');
+  const [currentActivity, setCurrentActivity] = useState(null);
+  const [name, setName] = useState('');
+  const [activityType, setActivityType] = useState('');
+  const [duration, setDuration] = useState('');
+  const [caloriesBurned, setCaloriesBurned] = useState('');
+  const [intensity, setIntensity] = useState('');
   const [date, setDate] = useState('');
 
-  const moodOptions = ['Odlično', 'Dobro', 'Neutralno', 'Loše', 'Užasno'];
+  const activityTypes = ['Kardio', 'Snaga', 'Fleksibilnost', 'Joga', 'Sport', 'Ostalo'];
+  const intensities = ['Nizak', 'Srednji', 'Visok'];
 
-  // Dohvatanje unosa iz dnevnika
-  const fetchDiaryEntries = async () => {
+  const fetchActivities = async () => {
     setLoading(true);
     setError('');
     try {
@@ -127,41 +122,45 @@ const DiaryScreen = () => {
         },
       };
 
-      const { data } = await axios.get('http://localhost:5000/api/diary', config);
-      setDiaryEntries(data);
+      const { data } = await axios.get('http://localhost:5000/api/activities', config);
+      setActivities(data);
       setLoading(false);
     } catch (err) {
-      console.error("Greška pri dohvatanju unosa iz dnevnika:", err);
+      console.error("Greška pri dohvatanju aktivnosti:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : 'Došlo je do greške pri dohvatanju unosa iz dnevnika.');
+        : 'Došlo je do greške pri dohvatanju aktivnosti.');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDiaryEntries();
+    fetchActivities();
   }, []);
 
-  const handleOpenDialog = (entry = null) => {
-    setCurrentEntry(entry);
-    if (entry) {
-      setTitle(entry.title);
-      setNotes(entry.notes || '');
-      setMood(entry.mood || '');
-      setDate(format(parseISO(entry.date), "yyyy-MM-dd'T'HH:mm"));
+  const handleOpenDialog = (activity = null) => {
+    setCurrentActivity(activity);
+    if (activity) {
+      setName(activity.name);
+      setActivityType(activity.activityType);
+      setDuration(activity.duration);
+      setCaloriesBurned(activity.caloriesBurned || '');
+      setIntensity(activity.intensity);
+      setDate(format(parseISO(activity.date), "yyyy-MM-dd'T'HH:mm"));
     } else {
-      setTitle('');
-      setNotes('');
-      setMood('');
-      setDate(format(new Date(), "yyyy-MM-dd'T'HH:mm")); // Podrazumevano trenutni datum i vreme
+      setName('');
+      setActivityType('');
+      setDuration('');
+      setCaloriesBurned('');
+      setIntensity('');
+      setDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     }
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setCurrentEntry(null);
+    setCurrentActivity(null);
   };
 
   const handleSubmit = async (e) => {
@@ -178,32 +177,32 @@ const DiaryScreen = () => {
         },
       };
 
-      const entryData = {
-        title,
-        notes,
-        mood,
+      const activityData = {
+        name,
+        activityType,
+        duration: Number(duration),
+        caloriesBurned: caloriesBurned ? Number(caloriesBurned) : undefined,
+        intensity,
         date: new Date(date),
       };
 
-      if (currentEntry) {
-        // Ažuriranje postojećeg unosa
-        const { data } = await axios.put(`http://localhost:5000/api/diary/${currentEntry._id}`, entryData, config);
-        setDiaryEntries(diaryEntries.map(e => (e._id === data._id ? data : e)));
-        setSnackbarMessage('Unos u dnevnik uspešno ažuriran!');
+      if (currentActivity) {
+        const { data } = await axios.put(`http://localhost:5000/api/activities/${currentActivity._id}`, activityData, config);
+        setActivities(activities.map(a => (a._id === data._id ? data : a)));
+        setSnackbarMessage('Aktivnost uspešno ažurirana!');
       } else {
-        // Kreiranje novog unosa
-        const { data } = await axios.post('http://localhost:5000/api/diary', entryData, config);
-        setDiaryEntries([data, ...diaryEntries]); // Dodaj novi na vrh
-        setSnackbarMessage('Unos u dnevnik uspešno kreiran!');
+        const { data } = await axios.post('http://localhost:5000/api/activities', activityData, config);
+        setActivities([data, ...activities]);
+        setSnackbarMessage('Aktivnost uspešno kreirana!');
       }
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       handleCloseDialog();
     } catch (err) {
-      console.error("Greška pri čuvanju unosa u dnevnik:", err);
+      console.error("Greška pri čuvanju aktivnosti:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : 'Greška pri čuvanju unosa u dnevnik.');
+        : 'Greška pri čuvanju aktivnosti.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -217,16 +216,16 @@ const DiaryScreen = () => {
           Authorization: `Bearer ${storedUserInfo.token}`,
         },
       };
-      await axios.delete(`http://localhost:5000/api/diary/${id}`, config);
-      setDiaryEntries(diaryEntries.filter(e => e._id !== id));
-      setSnackbarMessage('Unos u dnevnik uspešno obrisan!');
+      await axios.delete(`http://localhost:5000/api/activities/${id}`, config);
+      setActivities(activities.filter(a => a._id !== id));
+      setSnackbarMessage('Aktivnost uspešno obrisana!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (err) {
-      console.error("Greška pri brisanju unosa iz dnevnika:", err);
+      console.error("Greška pri brisanju aktivnosti:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : 'Greška pri brisanju unosa iz dnevnika.');
+        : 'Greška pri brisanju aktivnosti.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -243,7 +242,7 @@ const DiaryScreen = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress color="primary" />
-        <Typography variant="h6" sx={{ ml: 2, color: theme.palette.text.primary }}>Učitavanje dnevnika...</Typography>
+        <Typography variant="h6" sx={{ ml: 2, color: theme.palette.text.primary }}>Učitavanje aktivnosti...</Typography>
       </Box>
     );
   }
@@ -259,7 +258,7 @@ const DiaryScreen = () => {
   return (
     <Container maxWidth="md" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 } }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: { xs: 3, md: 5 }, color: theme.palette.primary.light }}>
-        Moj Dnevnik
+        Moje Aktivnosti
       </Typography>
 
       <Paper elevation={6} sx={{ p: { xs: 3, md: 4 }, mb: 4 }}>
@@ -271,19 +270,19 @@ const DiaryScreen = () => {
             onClick={() => handleOpenDialog()}
             sx={{ py: { xs: 1, md: 1.2 } }}
           >
-            Dodaj Unos
+            Dodaj Aktivnost
           </Button>
         </Box>
 
         <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.primary.light, mb: { xs: 2, md: 3 } }}>
-          Svi Unosi
+          Sve Aktivnosti
         </Typography>
-        {diaryEntries.length > 0 ? (
+        {activities.length > 0 ? (
           <List>
-            {diaryEntries.map((entry) => (
-              <DiaryEntryItem
-                key={entry._id}
-                entry={entry}
+            {activities.map((activity) => (
+              <ActivityItem
+                key={activity._id}
+                activity={activity}
                 onEdit={handleOpenDialog}
                 onDelete={handleDelete}
               />
@@ -291,52 +290,80 @@ const DiaryScreen = () => {
           </List>
         ) : (
           <Typography variant="body1" color="text.secondary">
-            Nema zabeleženih unosa u dnevnik. Kliknite "Dodaj Unos" da kreirate prvi!
+            Nema zabeleženih aktivnosti. Kliknite "Dodaj Aktivnost" da kreirate prvu!
           </Typography>
         )}
       </Paper>
 
-      {/* Dialog za dodavanje/editovanje unosa */}
+      {/* Dialog za dodavanje/editovanje aktivnosti */}
       <Dialog open={openDialog} onClose={handleCloseDialog} PaperProps={{ sx: { borderRadius: '16px', background: theme.palette.background.paper, border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)' } }}>
-        <DialogTitle sx={{ color: theme.palette.primary.light, fontWeight: 'bold' }}>{currentEntry ? 'Uredi Unos' : 'Dodaj Novi Unos'}</DialogTitle>
+        <DialogTitle sx={{ color: theme.palette.primary.light, fontWeight: 'bold' }}>{currentActivity ? 'Uredi Aktivnost' : 'Dodaj Novu Aktivnost'}</DialogTitle>
         <DialogContent>
           {error && <Alert severity="error" sx={{ my: 2, borderRadius: '8px' }}>{error}</Alert>}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <TextField
               margin="dense"
-              label="Naslov Unosa"
+              label="Naziv Aktivnosti"
               type="text"
               fullWidth
               variant="outlined"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              margin="dense"
-              label="Beleške (opciono)"
-              type="text"
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={4}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
               sx={{ mb: 2 }}
             />
             <TextField
               select
               margin="dense"
-              label="Raspoloženje"
+              label="Tip Aktivnosti"
               fullWidth
               variant="outlined"
-              value={mood}
-              onChange={(e) => setMood(e.target.value)}
+              value={activityType}
+              onChange={(e) => setActivityType(e.target.value)}
               required
               sx={{ mb: 2 }}
             >
-              {moodOptions.map((option) => (
+              {activityTypes.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              margin="dense"
+              label="Trajanje (minuta)"
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              required
+              inputProps={{ min: 1 }}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              margin="dense"
+              label="Kalorije (opciono)"
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={caloriesBurned}
+              onChange={(e) => setCaloriesBurned(e.target.value)}
+              inputProps={{ min: 0 }}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              select
+              margin="dense"
+              label="Intenzitet"
+              fullWidth
+              variant="outlined"
+              value={intensity}
+              onChange={(e) => setIntensity(e.target.value)}
+              required
+              sx={{ mb: 2 }}
+            >
+              {intensities.map((option) => (
                 <MenuItem key={option} value={option}>
                   {option}
                 </MenuItem>
@@ -359,7 +386,7 @@ const DiaryScreen = () => {
                 Otkaži
               </Button>
               <Button type="submit" variant="contained" color="primary" sx={{ py: 1, px: 2 }}>
-                {currentEntry ? 'Sačuvaj Promene' : 'Kreiraj Unos'}
+                {currentActivity ? 'Sačuvaj Promene' : 'Kreiraj Aktivnost'}
               </Button>
             </DialogActions>
           </Box>
@@ -381,4 +408,4 @@ const DiaryScreen = () => {
   );
 };
 
-export default DiaryScreen;
+export default ActivityScreen;

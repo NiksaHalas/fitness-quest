@@ -1,5 +1,8 @@
- 
 // backend/src/models/Activity.js
+// Autor: Tvoje Ime
+// Datum: 02.06.2025.
+// Svrha: Model za aktivnosti korisnika.
+
 const mongoose = require('mongoose');
 
 const ActivitySchema = new mongoose.Schema({
@@ -8,26 +11,33 @@ const ActivitySchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    name: {
+    name: { // Npr. "Trčanje", "Dizanje tegova", "Joga"
         type: String,
         required: true
     },
-    durationMinutes: {
-        type: Number,
+    activityType: { // Npr. "Kardio", "Snaga", "Fleksibilnost"
+        type: String,
         required: true
     },
-    caloriesBurned: {
+    duration: { // Trajanje aktivnosti u minutama
+        type: Number,
+        required: true,
+        min: 0
+    },
+    caloriesBurned: { // Opciono
         type: Number
     },
-    intensity: {
+    intensity: { // Npr. "Nizak", "Srednji", "Visok"
         type: String,
-        enum: ['low', 'medium', 'high'],
-        default: 'medium'
+        enum: ['Nizak', 'Srednji', 'Visok'],
+        default: 'Srednji'
     },
     date: {
         type: Date,
         default: Date.now
     }
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model('Activity', ActivitySchema);

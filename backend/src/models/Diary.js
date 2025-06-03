@@ -1,41 +1,40 @@
 // backend/src/models/Diary.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Mongoose model za unos u dnevnik (Diary).
+
 const mongoose = require('mongoose');
 
-const DiarySchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+const diarySchema = mongoose.Schema( // Promenjeno u diarySchema
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: 'User', // Referencira User model
+        },
+        title: {
+            type: String,
+            required: [true, 'Molimo dodajte naslov unosa'],
+        },
+        notes: {
+            type: String,
+            required: false, // Beleške nisu obavezne
+        },
+        mood: {
+            type: String,
+            required: [true, 'Molimo odaberite raspoloženje'],
+            enum: ['Odlično', 'Dobro', 'Neutralno', 'Loše', 'Užasno'], // Dozvoljene vrednosti raspoloženja
+        },
+        date: {
+            type: Date,
+            default: Date.now, // Podrazumevano trenutni datum i vreme
+        },
     },
-    // Dodao sam polja za aktivnost, trajanje i intenzitet, kao što smo pominjali
-    // Ako ne želiš ova polja, možeš ih ukloniti
-    activityType: { // Npr. "Kardio", "Snaga", "Meditacija", "Šetnja", "Odmaranje"
-        type: String,
-        required: true
-    },
-    duration: { // Trajanje aktivnosti u minutama
-        type: Number,
-        required: true,
-        min: 0
-    },
-    intensity: { // Npr. "Lako", "Srednje", "Visoko" ili brojčana skala
-        type: String,
-        required: true
-    },
-    date: {
-        type: Date,
-        default: Date.now
-    },
-    feeling: { // Emojiji ili tekstualni opis raspoloženja (npr. "srećan", "umoran", "energizovan")
-        type: String,
-        required: true
-    },
-    notes: {
-        type: String,
-        maxlength: 500
+    {
+        timestamps: true, // Automatski dodaj createdAt i updatedAt polja
     }
-}, {
-    timestamps: true // Dodaje createdAt i updatedAt polja automatski
-});
+);
 
-module.exports = mongoose.model('Diary', DiarySchema);
+const Diary = mongoose.model('Diary', diarySchema); // Promenjeno u Diary model
+
+module.exports = Diary;

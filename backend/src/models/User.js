@@ -1,50 +1,54 @@
- // backend/src/models/User.js
+// backend/src/models/User.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Mongoose model za korisnika sa XP-om, nivoom, značkama i brojačem misija.
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const UserSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        required: true,
-        unique: true
+const userSchema = mongoose.Schema(
+    {
+        username: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        password: {
+            type: String,
+            required: true,
+        },
+        xp: {
+            type: Number,
+            default: 0,
+        },
+        level: {
+            type: Number,
+            default: 1,
+        },
+        badges: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Badge', // Referencira Badge model
+            },
+        ],
+        completedMissionsCount: { // Dodato za statistiku
+            type: Number,
+            default: 0,
+        },
+        // Dodaj druga polja ako su potrebna (npr. avatar_url, goals, etc.)
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    level: {
-        type: Number,
-        default: 1
-    },
-    xp: {
-        type: Number,
-        default: 0
-    },
-    totalXpNeededForNextLevel: {
-        type: Number,
-        default: 100 // Primer, ovo se može dinamički izračunavati
-    },
-    badges: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Badge'
-    }],
-    avatarProgression: { // Može biti string (URL do slike) ili broj koji predstavlja fazu avatara
-        type: String,
-        default: 'default_avatar_stage_1.png'
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    {
+        timestamps: true, // Automatski dodaje createdAt i updatedAt
     }
-});
+);
 
-// Enkripcija lozinke pre snimanja
-UserSchema.pre('save', async function (next) {
+// Hashovanje lozinke pre čuvanja
+userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         next();
     }
@@ -53,8 +57,10 @@ UserSchema.pre('save', async function (next) {
 });
 
 // Metoda za poređenje lozinki
-UserSchema.methods.matchPassword = async function (enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

@@ -1,29 +1,42 @@
- 
 // backend/src/models/Badge.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Mongoose model za značke (Achievements).
+
 const mongoose = require('mongoose');
 
-const BadgeSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        unique: true
+const badgeSchema = mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        description: {
+            type: String,
+            required: true,
+        },
+        imageUrl: { // URL ili referenca na SVG ikonu (može biti i prazno ako je inline SVG)
+            type: String,
+            required: false,
+        },
+        requiredLevel: { // Nivo koji je potreban za ovu značku
+            type: Number,
+            required: false, // Neke značke možda nisu vezane za nivo
+            default: 0,
+        },
+        requiredMissions: { // Broj završenih misija za ovu značku
+            type: Number,
+            required: false,
+            default: 0,
+        },
+        // Mogu se dodati i drugi kriterijumi za značke (npr. requiredActivities, etc.)
     },
-    description: {
-        type: String,
-        required: true
-    },
-    imageUrl: { // URL do slike značke
-        type: String,
-        default: 'default_badge.png'
-    },
-    type: { // Npr. 'continuity', 'milestone', 'challenge'
-        type: String,
-        enum: ['continuity', 'milestone', 'challenge'],
-        default: 'milestone'
-    },
-    criteria: { // Opis kriterijuma za dodelu značke (npr. '7 dana uzastopnog vežbanja')
-        type: String
+    {
+        timestamps: true,
     }
-});
+);
 
-module.exports = mongoose.model('Badge', BadgeSchema);
+const Badge = mongoose.model('Badge', badgeSchema);
+
+module.exports = Badge;

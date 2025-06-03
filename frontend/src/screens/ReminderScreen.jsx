@@ -1,7 +1,7 @@
-// frontend/src/screens/DiaryScreen.jsx
+// frontend/src/screens/ReminderScreen.jsx
 // Autor: Tvoje Ime
 // Datum: 03.06.2025.
-// Svrha: Stranica za upravljanje dnevnikom aktivnosti i osećanja sa modernim tamnim dizajnom.
+// Svrha: Stranica za upravljanje podsetnicima (kreiranje, pregled, ažuriranje, brisanje) sa modernim tamnim dizajnom.
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -28,62 +28,60 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import axios from 'axios';
 import { format, parseISO } from 'date-fns';
-import { useTheme } from '@mui/material/styles'; // DODATO: useTheme
+import { useTheme } from '@mui/material/styles';
 
-// Pomoćna komponenta za prikaz pojedinačnog unosa u dnevnik
-const DiaryEntryItem = ({ entry, onEdit, onDelete }) => {
-  const theme = useTheme(); // Pristup temi
-  const formattedDate = format(parseISO(entry.date), 'dd.MM.yyyy. HH:mm');
-
-  // Boja raspoloženja
-  let moodColor = theme.palette.text.secondary;
-  switch (entry.mood) {
-    case 'Odlično': moodColor = theme.palette.primary.main; break; // Svetla ljubičasta
-    case 'Dobro': moodColor = theme.palette.secondary.main; break; // Tirkizna
-    case 'Neutralno': moodColor = theme.palette.text.secondary; break;
-    case 'Loše': moodColor = theme.palette.error.main; break;
-    case 'Užasno': moodColor = theme.palette.error.dark; break;
-    default: moodColor = theme.palette.text.secondary;
-  }
+// Pomoćna komponenta za prikaz pojedinačnog podsetnika (dodatno stilizovana)
+const ReminderItem = ({ reminder, onEdit, onDelete, onToggleComplete }) => {
+  const theme = useTheme();
+  const formattedDateTime = format(parseISO(reminder.dateTime), 'dd.MM.yyyy. HH:mm');
 
   return (
     <ListItem divider sx={{
-      mb: 1,
-      borderRadius: '10px',
-      backgroundColor: 'rgba(255,255,255,0.05)', // Suptilna pozadina
+      mb: 1.5, // Povećan razmak između stavki
+      borderRadius: '12px', // Još zaobljenije ivice
+      backgroundColor: reminder.isCompleted ? 'rgba(3, 218, 198, 0.08)' : 'rgba(255,255,255,0.05)', // Suptilna pozadina, svetlija za kompletirane
+      border: `1px solid ${reminder.isCompleted ? theme.palette.secondary.main : 'rgba(255,255,255,0.08)'}`, // Obrub
+      transition: 'all 0.2s ease-in-out',
+      '&:hover': {
+        backgroundColor: reminder.isCompleted ? 'rgba(3, 218, 198, 0.12)' : 'rgba(255,255,255,0.08)',
+        transform: 'translateY(-2px)', // Blagi hover efekat
+        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+      },
       '&:last-child': { mb: 0 },
-      alignItems: 'flex-start', // Poravnanje na vrh
-      p: { xs: 1.5, md: 2 } // Responzivni padding
+      alignItems: 'flex-start',
+      p: { xs: 1.5, md: 2 }
     }}>
       <ListItemText
         primary={
-          <Typography variant="h6" sx={{ fontWeight: 'medium', color: theme.palette.primary.light }}>
-            {entry.title}
+          <Typography variant="h6" sx={{ fontWeight: 'medium', color: theme.palette.primary.light, textDecoration: reminder.isCompleted ? 'line-through' : 'none' }}>
+            {reminder.title}
           </Typography>
         }
         secondary={
           <>
             <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              Datum: {formattedDate}
+              {formattedDateTime}
             </Typography>
-            <Typography component="span" variant="body2" sx={{ display: 'block', color: moodColor, fontWeight: 'bold', mb: 0.5 }}>
-              Raspoloženje: {entry.mood}
-            </Typography>
-            {entry.notes && (
+            {reminder.description && (
               <Typography component="span" variant="body2" color="text.primary" sx={{ display: 'block' }}>
-                Beleške: {entry.notes}
+                {reminder.description}
               </Typography>
             )}
           </>
         }
       />
-      <ListItemSecondaryAction>
-        <IconButton edge="end" aria-label="edit" onClick={() => onEdit(entry)} sx={{ color: theme.palette.secondary.light }}>
+      <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.5, sm: 1 } }}> {/* Responzivni raspored dugmadi */}
+        <IconButton edge="end" aria-label="toggle-complete" onClick={() => onToggleComplete(reminder._id, !reminder.isCompleted)} sx={{ color: reminder.isCompleted ? theme.palette.secondary.main : theme.palette.text.secondary }}>
+          {reminder.isCompleted ? <CheckCircleOutlineIcon /> : <RadioButtonUncheckedIcon />}
+        </IconButton>
+        <IconButton edge="end" aria-label="edit" onClick={() => onEdit(reminder)} sx={{ color: theme.palette.primary.main }}>
           <EditIcon />
         </IconButton>
-        <IconButton edge="end" aria-label="delete" onClick={() => onDelete(entry._id)} sx={{ color: theme.palette.error.main }}>
+        <IconButton edge="end" aria-label="delete" onClick={() => onDelete(reminder._id)} sx={{ color: theme.palette.error.main }}>
           <DeleteIcon />
         </IconButton>
       </ListItemSecondaryAction>
@@ -91,26 +89,22 @@ const DiaryEntryItem = ({ entry, onEdit, onDelete }) => {
   );
 };
 
-const DiaryScreen = () => {
-  const [diaryEntries, setDiaryEntries] = useState([]);
+const ReminderScreen = () => {
+  const [reminders, setReminders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const theme = useTheme(); // Inicijalizuj temu
+  const theme = useTheme();
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [currentEntry, setCurrentEntry] = useState(null); // Za editovanje
+  const [currentReminder, setCurrentReminder] = useState(null);
   const [title, setTitle] = useState('');
-  const [notes, setNotes] = useState('');
-  const [mood, setMood] = useState('');
-  const [date, setDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [dateTime, setDateTime] = useState(''); // Definisanje dateTime i setDateTime
 
-  const moodOptions = ['Odlično', 'Dobro', 'Neutralno', 'Loše', 'Užasno'];
-
-  // Dohvatanje unosa iz dnevnika
-  const fetchDiaryEntries = async () => {
+  const fetchReminders = async () => {
     setLoading(true);
     setError('');
     try {
@@ -127,41 +121,39 @@ const DiaryScreen = () => {
         },
       };
 
-      const { data } = await axios.get('http://localhost:5000/api/diary', config);
-      setDiaryEntries(data);
+      const { data } = await axios.get('http://localhost:5000/api/reminders', config);
+      setReminders(data);
       setLoading(false);
     } catch (err) {
-      console.error("Greška pri dohvatanju unosa iz dnevnika:", err);
+      console.error("Greška pri dohvatanju podsetnika:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : 'Došlo je do greške pri dohvatanju unosa iz dnevnika.');
+        : 'Došlo je do greške pri dohvatanju podsetnika.');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDiaryEntries();
+    fetchReminders();
   }, []);
 
-  const handleOpenDialog = (entry = null) => {
-    setCurrentEntry(entry);
-    if (entry) {
-      setTitle(entry.title);
-      setNotes(entry.notes || '');
-      setMood(entry.mood || '');
-      setDate(format(parseISO(entry.date), "yyyy-MM-dd'T'HH:mm"));
+  const handleOpenDialog = (reminder = null) => {
+    setCurrentReminder(reminder);
+    if (reminder) {
+      setTitle(reminder.title);
+      setDescription(reminder.description || '');
+      setDateTime(format(parseISO(reminder.dateTime), "yyyy-MM-dd'T'HH:mm"));
     } else {
       setTitle('');
-      setNotes('');
-      setMood('');
-      setDate(format(new Date(), "yyyy-MM-dd'T'HH:mm")); // Podrazumevano trenutni datum i vreme
+      setDescription('');
+      setDateTime(format(new Date(), "yyyy-MM-dd'T'HH:mm")); // KLJUČNA PROMENA: Koristi setDateTime
     }
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setCurrentEntry(null);
+    setCurrentReminder(null);
   };
 
   const handleSubmit = async (e) => {
@@ -178,32 +170,25 @@ const DiaryScreen = () => {
         },
       };
 
-      const entryData = {
-        title,
-        notes,
-        mood,
-        date: new Date(date),
-      };
+      const reminderData = { title, description, dateTime };
 
-      if (currentEntry) {
-        // Ažuriranje postojećeg unosa
-        const { data } = await axios.put(`http://localhost:5000/api/diary/${currentEntry._id}`, entryData, config);
-        setDiaryEntries(diaryEntries.map(e => (e._id === data._id ? data : e)));
-        setSnackbarMessage('Unos u dnevnik uspešno ažuriran!');
+      if (currentReminder) {
+        const { data } = await axios.put(`http://localhost:5000/api/reminders/${currentReminder._id}`, reminderData, config);
+        setReminders(reminders.map(r => (r._id === data._id ? data : r)));
+        setSnackbarMessage('Podsetnik uspešno ažuriran!');
       } else {
-        // Kreiranje novog unosa
-        const { data } = await axios.post('http://localhost:5000/api/diary', entryData, config);
-        setDiaryEntries([data, ...diaryEntries]); // Dodaj novi na vrh
-        setSnackbarMessage('Unos u dnevnik uspešno kreiran!');
+        const { data } = await axios.post('http://localhost:5000/api/reminders', reminderData, config);
+        setReminders([data, ...reminders]);
+        setSnackbarMessage('Podsetnik uspešno kreiran!');
       }
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       handleCloseDialog();
     } catch (err) {
-      console.error("Greška pri čuvanju unosa u dnevnik:", err);
+      console.error("Greška pri čuvanju podsetnika:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : 'Greška pri čuvanju unosa u dnevnik.');
+        : 'Greška pri čuvanju podsetnika.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -217,16 +202,40 @@ const DiaryScreen = () => {
           Authorization: `Bearer ${storedUserInfo.token}`,
         },
       };
-      await axios.delete(`http://localhost:5000/api/diary/${id}`, config);
-      setDiaryEntries(diaryEntries.filter(e => e._id !== id));
-      setSnackbarMessage('Unos u dnevnik uspešno obrisan!');
+      await axios.delete(`http://localhost:5000/api/reminders/${id}`, config);
+      setReminders(reminders.filter(r => r._id !== id));
+      setSnackbarMessage('Podsetnik uspešno obrisan!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (err) {
-      console.error("Greška pri brisanju unosa iz dnevnika:", err);
+      console.error("Greška pri brisanju podsetnika:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : 'Greška pri brisanju unosa iz dnevnika.');
+        : 'Greška pri brisanju podsetnika.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleToggleComplete = async (id, isCompleted) => {
+    try {
+      const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${storedUserInfo.token}`,
+        },
+      };
+      const { data } = await axios.put(`http://localhost:5000/api/reminders/${id}`, { isCompleted }, config);
+      setReminders(reminders.map(r => (r._id === data._id ? data : r)));
+      setSnackbarMessage(`Podsetnik označen kao ${data.isCompleted ? 'kompletiran' : 'nekompletiran'}!`);
+      setSnackbarSeverity('info');
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error("Greška pri ažuriranju statusa podsetnika:", err);
+      setError(err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Greška pri ažuriranju statusa podsetnika.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -243,7 +252,7 @@ const DiaryScreen = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress color="primary" />
-        <Typography variant="h6" sx={{ ml: 2, color: theme.palette.text.primary }}>Učitavanje dnevnika...</Typography>
+        <Typography variant="h6" sx={{ ml: 2, color: theme.palette.text.primary }}>Učitavanje podsetnika...</Typography>
       </Box>
     );
   }
@@ -259,7 +268,7 @@ const DiaryScreen = () => {
   return (
     <Container maxWidth="md" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 } }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: { xs: 3, md: 5 }, color: theme.palette.primary.light }}>
-        Moj Dnevnik
+        Moji Podsetnici
       </Typography>
 
       <Paper elevation={6} sx={{ p: { xs: 3, md: 4 }, mb: 4 }}>
@@ -271,40 +280,41 @@ const DiaryScreen = () => {
             onClick={() => handleOpenDialog()}
             sx={{ py: { xs: 1, md: 1.2 } }}
           >
-            Dodaj Unos
+            Dodaj Podsetnik
           </Button>
         </Box>
 
         <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.primary.light, mb: { xs: 2, md: 3 } }}>
-          Svi Unosi
+          Lista Podsetnika
         </Typography>
-        {diaryEntries.length > 0 ? (
+        {reminders.length > 0 ? (
           <List>
-            {diaryEntries.map((entry) => (
-              <DiaryEntryItem
-                key={entry._id}
-                entry={entry}
+            {reminders.map((reminder) => (
+              <ReminderItem
+                key={reminder._id}
+                reminder={reminder}
                 onEdit={handleOpenDialog}
                 onDelete={handleDelete}
+                onToggleComplete={handleToggleComplete}
               />
             ))}
           </List>
         ) : (
           <Typography variant="body1" color="text.secondary">
-            Nema zabeleženih unosa u dnevnik. Kliknite "Dodaj Unos" da kreirate prvi!
+            Nema podsetnika. Kliknite "Dodaj Podsetnik" da kreirate prvi!
           </Typography>
         )}
       </Paper>
 
-      {/* Dialog za dodavanje/editovanje unosa */}
+      {/* Dialog za dodavanje/editovanje podsetnika */}
       <Dialog open={openDialog} onClose={handleCloseDialog} PaperProps={{ sx: { borderRadius: '16px', background: theme.palette.background.paper, border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)' } }}>
-        <DialogTitle sx={{ color: theme.palette.primary.light, fontWeight: 'bold' }}>{currentEntry ? 'Uredi Unos' : 'Dodaj Novi Unos'}</DialogTitle>
+        <DialogTitle sx={{ color: theme.palette.primary.light, fontWeight: 'bold' }}>{currentReminder ? 'Uredi Podsetnik' : 'Dodaj Novi Podsetnik'}</DialogTitle>
         <DialogContent>
           {error && <Alert severity="error" sx={{ my: 2, borderRadius: '8px' }}>{error}</Alert>}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <TextField
               margin="dense"
-              label="Naslov Unosa"
+              label="Naslov Podsetnika"
               type="text"
               fullWidth
               variant="outlined"
@@ -315,41 +325,24 @@ const DiaryScreen = () => {
             />
             <TextField
               margin="dense"
-              label="Beleške (opciono)"
+              label="Opis (opciono)"
               type="text"
               fullWidth
               variant="outlined"
               multiline
-              rows={4}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               sx={{ mb: 2 }}
             />
-            <TextField
-              select
-              margin="dense"
-              label="Raspoloženje"
-              fullWidth
-              variant="outlined"
-              value={mood}
-              onChange={(e) => setMood(e.target.value)}
-              required
-              sx={{ mb: 2 }}
-            >
-              {moodOptions.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
             <TextField
               margin="dense"
               label="Datum i Vreme"
               type="datetime-local"
               fullWidth
               variant="outlined"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={dateTime}
+              onChange={(e) => setDateTime(e.target.value)}
               InputLabelProps={{ shrink: true }}
               required
               sx={{ mb: 2 }}
@@ -359,7 +352,7 @@ const DiaryScreen = () => {
                 Otkaži
               </Button>
               <Button type="submit" variant="contained" color="primary" sx={{ py: 1, px: 2 }}>
-                {currentEntry ? 'Sačuvaj Promene' : 'Kreiraj Unos'}
+                {currentReminder ? 'Sačuvaj Promene' : 'Kreiraj Podsetnik'}
               </Button>
             </DialogActions>
           </Box>
@@ -381,4 +374,4 @@ const DiaryScreen = () => {
   );
 };
 
-export default DiaryScreen;
+export default ReminderScreen;

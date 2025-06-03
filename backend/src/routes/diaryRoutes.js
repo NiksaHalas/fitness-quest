@@ -1,13 +1,16 @@
 // backend/src/routes/diaryRoutes.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Rute za upravljanje unosima u dnevnik.
+
 const express = require('express');
-const { createDiaryEntry, getDiaryEntries } = require('../controllers/diaryController');
-const auth = require('../middleware/authMiddleware'); // Pretpostavljam da je auth middleware ispravno podešen
+const { createDiaryEntry, getDiaryEntries, updateDiaryEntry, deleteDiaryEntry } = require('../controllers/diaryController');
+const protect = require('../middleware/authMiddleware');
 const router = express.Router();
 
-// Ruta za kreiranje novog unosa u dnevnik
-router.post('/', auth, createDiaryEntry);
-
-// Ruta za dohvatanje svih unosa u dnevnik za prijavljenog korisnika
-router.get('/', auth, getDiaryEntries);
+router.post('/', protect, createDiaryEntry);
+router.get('/', protect, getDiaryEntries);
+router.put('/:id', protect, updateDiaryEntry);
+router.delete('/:id', protect, deleteDiaryEntry);
 
 module.exports = router;

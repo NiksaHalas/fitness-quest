@@ -1,23 +1,33 @@
 // frontend/src/screens/LoginScreen.jsx
 // Autor: Tvoje Ime
-// Datum: 02.06.2025.
-// Svrha: Stranica za prijavu korisnika.
+// Datum: 03.06.2025.
+// Svrha: Stranica za prijavu korisnika sa modernim tamnim dizajnom.
 
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // DODATO: Link
-import { Box, TextField, Button, Typography, Container, Alert } from '@mui/material';
-import axios from 'axios'; // Za HTTP zahteve
+import React, { useState, useEffect } from 'react';
+import { TextField, Button, Typography, Box, Container, Alert, CircularProgress, Paper } from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useTheme } from '@mui/material/styles';
 
-const LoginScreen = () => {
+const LoginScreen = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // Za prikaz grešaka
-  const navigate = useNavigate(); // Hook za navigaciju
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const theme = useTheme();
+
+  useEffect(() => {
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   const submitHandler = async (e) => {
-    e.preventDefault(); // Spreči podrazumevano ponašanje forme
-
-    setError(''); // Resetuj greške
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
       const config = {
@@ -27,45 +37,60 @@ const LoginScreen = () => {
       };
 
       const { data } = await axios.post(
-        'http://localhost:5000/api/auth/login', // Adresa tvog backend API-ja za prijavu
+        'http://localhost:5000/api/auth/login',
         { email, password },
         config
       );
 
-      // Ako je prijava uspešna, sačuvaj token u localStorage
-      localStorage.setItem('userInfo', JSON.stringify(data));
-      
-      // Opciono: preusmeri korisnika na dashboard
-      navigate('/dashboard'); // Preusmeri na dashboard (koji ćeš implementirati)
-      // Ako ne želiš da preusmeravaš odmah, možeš prikazati poruku
       console.log('Prijava uspešna!', data);
-
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      setIsLoggedIn(true);
+      navigate('/dashboard');
     } catch (err) {
+      console.error("Greška pri prijavi:", err);
       setError(err.response && err.response.data.message
         ? err.response.data.message
-        : err.message);
+        : 'Neuspešna prijava. Proverite email i lozinku.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
+    <Container
+      maxWidth="xs"
+      sx={{
+        mt: { xs: 4, md: 8 }, // Responzivni top margin
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 'calc(100vh - 120px)',
+      }}
+    >
+      <Paper
+        elevation={6}
         sx={{
-          mt: 8,
+          p: { xs: 3, md: 5 }, // Responzivni padding
+          borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          p: 4,
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: 3,
+          width: '100%',
+          background: theme.palette.background.paper, // Koristi boju pozadine papira iz teme
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)', // Tamnija senka
+          border: '1px solid rgba(255, 255, 255, 0.05)', // Suptilni obrub
         }}
       >
-        <Typography component="h1" variant="h5">
-          Prijava
+        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 3, color: theme.palette.primary.light, fontWeight: 700 }}>
+          Dobrodošli nazad!
         </Typography>
-        {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
-        <Box component="form" onSubmit={submitHandler} sx={{ mt: 3, width: '100%' }}>
+        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+          Prijavite se da nastavite svoju Fitness Quest avanturu.
+        </Typography>
+        {error && <Alert severity="error" sx={{ mb: 2, width: '100%', borderRadius: '8px' }}>{error}</Alert>}
+        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}><CircularProgress color="secondary" /></Box>} {/* Boja loading kruga */}
+        <Box component="form" onSubmit={submitHandler} sx={{ mt: 1, width: '100%' }}>
           <TextField
             margin="normal"
             required
@@ -77,6 +102,7 @@ const LoginScreen = () => {
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            sx={{ mb: { xs: 2, md: 3 } }}
           />
           <TextField
             margin="normal"
@@ -89,20 +115,23 @@ const LoginScreen = () => {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            sx={{ mb: { xs: 3, md: 4 } }}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            color="primary"
+            sx={{ mt: 2, mb: 2, py: { xs: 1.2, md: 1.5 }, fontSize: { xs: '1rem', md: '1.1rem' } }}
+            disabled={loading}
           >
             Prijavi se
           </Button>
-          <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
-            Nemaš nalog? <Link to="/register" style={{ textDecoration: 'none', color: '#1976d2' }}>Registruj se</Link>
+          <Typography variant="body2" sx={{ textAlign: 'center', color: theme.palette.text.secondary }}>
+            Nemaš nalog? <Link to="/register" style={{ color: theme.palette.secondary.main, textDecoration: 'none', fontWeight: 'bold' }}>Registruj se</Link>
           </Typography>
         </Box>
-      </Box>
+      </Paper>
     </Container>
   );
 };

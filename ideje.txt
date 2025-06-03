@@ -1,0 +1,8 @@
+ispraviti ceo dizajn sve je lose
+
+xp bar ne promeni odmah level kad se predje 100xp, takodje potrebno je dodati da svaki level veci zahteva vise xp za sledeci radi napretka
+
+popraviti misije da daju razlicito xp
+
+popraviti sve znacke i avatar ikone koje treba da se menjaju kako avatar leveluje
+
