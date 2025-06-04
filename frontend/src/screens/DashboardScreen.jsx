@@ -4,47 +4,16 @@
 // Svrha: Glavni dashboard za prijavljenog korisnika, prikazuje XP, Avatar, Misije, Statistiku, Značke i Podsetnike sa savršenim poravnanjem koristeći Flexbox.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, CircularProgress, Alert, Paper, Container, Snackbar, List, ListItem, ListItemText } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Paper, Container, Snackbar, List, ListItem, ListItemText, Button } from '@mui/material'; // Dodato Button
 import MuiAlert from '@mui/material/Alert';
 import XPBar from '../components/XPBar';
 import AvatarDisplay from '../components/AvatarDisplay';
 import MissionCard from '../components/MissionCard';
 import StatsDashboard from '../components/StatsDashboard';
+import BadgeDisplay from '../components/BadgeDisplay';
 import axios from 'axios';
 import { format, parseISO, isFuture, isPast, differenceInMinutes } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
-
-// Pomoćna komponenta za prikaz značke (dodatno stilizovana)
-const BadgeDisplay = ({ badge }) => {
-  const theme = useTheme();
-  return (
-    <Box sx={{
-      textAlign: 'center',
-      m: 1,
-      p: 1.5,
-      borderRadius: '12px',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-      '&:hover': {
-        transform: 'translateY(-3px)',
-        boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-      },
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minWidth: '80px',
-      maxWidth: '100px',
-      flexShrink: 0,
-    }}>
-      <img src={badge.imageUrl} alt={badge.name} style={{ width: 50, height: 50, borderRadius: '50%', border: `2px solid ${theme.palette.secondary.main}` }} />
-      <Typography variant="caption" display="block" sx={{ mt: 0.8, fontWeight: 'medium', color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
-        {badge.name}
-      </Typography>
-    </Box>
-  );
-};
 
 const DashboardScreen = () => {
   const [userInfo, setUserInfo] = useState(null);
@@ -79,13 +48,15 @@ const DashboardScreen = () => {
       };
 
       const { data: userData } = await axios.get('http://localhost:5000/api/user/profile', config);
-      // KLJUČNA PROMENA: Izračunaj xpToNextLevel za trenutni nivo korisnika
-      const xpRequiredForCurrentLevel = userData.level * 100; // Pretpostavljena logika, uskladiti sa backendom
+      const xpRequiredForCurrentLevel = userData.level * 100;
       setUserInfo({ ...userData, xpToNextLevel: xpRequiredForCurrentLevel });
 
-
       const { data: missionsData } = await axios.get('http://localhost:5000/api/missions', config);
-      setMissions(missionsData);
+      const processedMissions = missionsData.map(mission => ({
+          ...mission,
+          isCompleted: mission.completedBy.includes(userData._id)
+      }));
+      setMissions(processedMissions);
 
       const { data: diaryData } = await axios.get('http://localhost:5000/api/diary', config);
       setDiaryEntries(diaryData);
@@ -151,13 +122,12 @@ const DashboardScreen = () => {
         )
       );
 
-      // KLJUČNA PROMENA: Ažuriraj userInfo sa podacima iz backend-a
       setUserInfo(prevInfo => ({
         ...prevInfo,
         xp: data.userXp,
         level: data.userLevel,
-        xpToNextLevel: data.xpToNextLevel, // Dodato xpToNextLevel
-        badges: data.newlyAwardedBadges ? [...(prevInfo.badges || []), ...data.newlyAwardedBadges] : prevInfo.badges // Dodato za značke
+        xpToNextLevel: data.xpToNextLevel,
+        badges: data.newlyAwardedBadges ? [...(prevInfo.badges || []), ...data.newlyAwardedBadges] : prevInfo.badges
       }));
 
       if (data.newlyAwardedBadges && data.newlyAwardedBadges.length > 0) {
@@ -171,7 +141,6 @@ const DashboardScreen = () => {
         setSnackbarOpen(true);
       }
 
-      // Ako je došlo do level up-a, prikaži obaveštenje
       if (data.userLevel > data.userLevelBefore) {
         setSnackbarMessage(`Čestitamo! Dostigli ste NIVO ${data.userLevel}!`);
         setSnackbarSeverity('success');
@@ -180,16 +149,52 @@ const DashboardScreen = () => {
 
     } catch (err) {
       console.error("Greška pri kompletiranju misije:", err);
-      setError(err.response && err.response.data.message
+      const errorMessage = err.response && err.response.data.message
         ? err.response.data.message
-        : 'Greška pri kompletiranju misije.');
-      setSnackbarMessage(err.response && err.response.data.message
-        ? err.response.data.message
-        : 'Greška pri kompletiranju misije.');
+        : 'Greška pri kompletiranju misije.';
+      setError(errorMessage);
+      setSnackbarMessage(errorMessage);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
   };
+
+  const handleResetDailyMissions = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
+      if (!storedUserInfo || !storedUserInfo.token) {
+        setError('Niste prijavljeni. Molimo prijavite se.');
+        setLoading(false);
+        return;
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${storedUserInfo.token}`,
+        },
+      };
+
+      const { data } = await axios.post('http://localhost:5000/api/missions/reset-daily', {}, config);
+      setSnackbarMessage(data.message || 'Dnevne misije resetovane!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      fetchUserData(); // Ponovo dohvati podatke da se osveži lista misija
+    } catch (err) {
+      console.error("Greška pri resetovanju dnevnih misija:", err);
+      const errorMessage = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Greška pri resetovanju dnevnih misija.';
+      setError(errorMessage);
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
@@ -221,23 +226,35 @@ const DashboardScreen = () => {
         Moj Dashboard
       </Typography>
 
+      {/* Dugme za resetovanje dnevnih misija */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, md: 4 } }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={handleResetDailyMissions}
+          sx={{ py: 1.5, px: 3, fontSize: '1rem', fontWeight: 'bold', borderRadius: '12px' }}
+        >
+          Resetuj Dnevne Misije
+        </Button>
+      </Box>
+
       {/* Glavni Flex kontejner za sve sekcije */}
       <Box sx={{
         display: 'flex',
         flexDirection: 'column',
-        gap: { xs: 2, md: 4 }, // Razmak između redova
+        gap: { xs: 2, md: 4 },
       }}>
 
         {/* Prvi red: Avatar/XP i Misije */}
         <Box sx={{
           display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' }, // Stack na mobilnom, red na desktopu
+          flexDirection: { xs: 'column', md: 'row' },
           gap: { xs: 2, md: 4 },
-          alignItems: 'stretch', // Osigurava da se kartice rastegnu po visini
+          alignItems: 'stretch',
         }}>
           {/* Avatar/XP kartica */}
           <Box sx={{
-            flex: { xs: '1 1 100%', md: '0 0 33.33%' }, // Zauzima 1/3 širine na desktopu
+            flex: { xs: '1 1 100%', md: '0 0 33.33%' },
             display: 'flex',
             flexDirection: 'column',
           }}>
@@ -247,9 +264,9 @@ const DashboardScreen = () => {
               flexDirection: 'column',
               alignItems: 'center',
               flexGrow: 1,
-              minHeight: '300px', // Povećana fiksna minimalna visina za poravnanje sa misijama
-              justifyContent: 'center', // Centriraj sadržaj vertikalno
-              textAlign: 'center', // Centriraj tekst horizontalno
+              minHeight: '300px',
+              justifyContent: 'center',
+              textAlign: 'center',
             }}>
               {userInfo && <AvatarDisplay level={userInfo.level || 1} />}
               <Box sx={{ mt: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -270,25 +287,24 @@ const DashboardScreen = () => {
 
           {/* Misije kartica */}
           <Box sx={{
-            flex: { xs: '1 1 100%', md: '1 1 66.66%' }, // Zauzima 2/3 širine na desktopu
+            flex: { xs: '1 1 100%', md: '1 1 66.66%' },
             display: 'flex',
             flexDirection: 'column',
           }}>
             <Paper sx={{
               p: { xs: 2, md: 3 },
               flexGrow: 1,
-              minHeight: '300px', // Ista fiksna visina kao Avatar/XP kartica
+              minHeight: '300px',
             }}>
               <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.primary.light, mb: { xs: 2, md: 3 } }}>
                 Dostupne Misije
               </Typography>
-              {/* Unutrašnji Flex kontejner za misije */}
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'flex-start' }}>
                 {missions.length > 0 ? (
                   missions.map((mission) => (
-                    <Box key={mission._id} sx={{ flex: '0 0 calc(33.33% - 16px)', maxWidth: 'calc(33.33% - 16px)', // 3 kolone na desktopu
-                                                  '@media (max-width:900px)': { flex: '0 0 calc(50% - 16px)', maxWidth: 'calc(50% - 16px)' }, // 2 kolone na tabletu
-                                                  '@media (max-width:600px)': { flex: '1 1 100%', maxWidth: '100%' } // 1 kolona na mobilnom
+                    <Box key={mission._id} sx={{ flex: '0 0 calc(33.33% - 16px)', maxWidth: 'calc(33.33% - 16px)',
+                                                  '@media (max-width:900px)': { flex: '0 0 calc(50% - 16px)', maxWidth: 'calc(50% - 16px)' },
+                                                  '@media (max-width:600px)': { flex: '1 1 100%', maxWidth: '100%' }
                                                 }}>
                       <MissionCard mission={mission} onCompleteMission={handleCompleteMission} />
                     </Box>
@@ -306,20 +322,20 @@ const DashboardScreen = () => {
         {/* Drugi red: Značke i Nadolazeći Podsetnici */}
         <Box sx={{
           display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' }, // Stack na mobilnom, red na desktopu
+          flexDirection: { xs: 'column', md: 'row' },
           gap: { xs: 2, md: 4 },
-          alignItems: 'stretch', // Osigurava da se kartice rastegnu po visini
+          alignItems: 'stretch',
         }}>
           {/* Značke kartica */}
           <Box sx={{
-            flex: { xs: '1 1 100%', md: '1 1 50%' }, // Zauzima 1/2 širine na desktopu
+            flex: { xs: '1 1 100%', md: '1 1 50%' },
             display: 'flex',
             flexDirection: 'column',
           }}>
             <Paper sx={{
               p: { xs: 2, md: 3 },
               flexGrow: 1,
-              minHeight: '250px', // Fiksna minimalna visina za poravnanje
+              minHeight: '250px',
             }}>
               <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.primary.light, mb: { xs: 2, md: 3 }, textAlign: 'center' }}>
                 Osvojene Značke
@@ -327,11 +343,9 @@ const DashboardScreen = () => {
               <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: { xs: 1, md: 2 } }}>
                 {userInfo?.badges && userInfo.badges.length > 0 ? (
                   userInfo.badges.map((badge) => (
-                    // KLJUČNA PROMENA: Proveri da li je badge objekat pre nego što ga proslediš
                     typeof badge === 'object' && badge !== null && badge._id ? (
                       <BadgeDisplay key={badge._id} badge={badge} />
                     ) : (
-                      // Fallback za značke koje nisu objekti (npr. samo ID)
                       <Typography key={badge} variant="caption" sx={{ m: 1, color: theme.palette.text.secondary }}>Značka ID: {badge}</Typography>
                     )
                   ))
@@ -346,14 +360,14 @@ const DashboardScreen = () => {
 
           {/* Nadolazeći Podsetnici kartica */}
           <Box sx={{
-            flex: { xs: '1 1 100%', md: '1 1 50%' }, // Zauzima 1/2 širine na desktopu
+            flex: { xs: '1 1 100%', md: '1 1 50%' },
             display: 'flex',
             flexDirection: 'column',
           }}>
             <Paper sx={{
               p: { xs: 2, md: 3 },
               flexGrow: 1,
-              minHeight: '250px', // Ista fiksna visina kao Značke kartica
+              minHeight: '250px',
             }}>
               <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.primary.light, mb: { xs: 2, md: 3 }, textAlign: 'center' }}>
                 Nadolazeći Podsetnici
@@ -382,7 +396,7 @@ const DashboardScreen = () => {
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
-          width: '100%', // Zauzima celu širinu
+          width: '100%',
         }}>
           <StatsDashboard userData={userInfo} activities={activities || []} diaryEntries={diaryEntries || []} />
         </Box>

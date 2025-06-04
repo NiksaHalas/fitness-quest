@@ -6,3 +6,4 @@ popraviti misije da daju razlicito xp
 
 popraviti sve znacke i avatar ikone koje treba da se menjaju kako avatar leveluje
 
+resiti reminder da izlazi na vrhu i da uopste iszlazi na vreme kada treba

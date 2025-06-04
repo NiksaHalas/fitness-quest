@@ -1,7 +1,7 @@
 // backend/src/models/Mission.js
 // Autor: Tvoje Ime
 // Datum: 03.06.2025.
-// Svrha: Mongoose model za misije.
+// Svrha: Mongoose model za misije sa dodatnim poljem za datum poslednjeg resetovanja.
 
 const mongoose = require('mongoose');
 
@@ -19,19 +19,22 @@ const missionSchema = mongoose.Schema(
         xpReward: {
             type: Number,
             required: true,
-            default: 10, // Podrazumevana XP nagrada
+            default: 150, // Podrazumevana XP nagrada
         },
-        isDaily: {
+        isDaily: { // Da li je misija dnevna (treba da se resetuje)
             type: Boolean,
             default: false,
         },
-        completedBy: [ // KLJUČNA PROMENA: Definisano kao niz ObjectId-ja korisnika
+        completedBy: [
             {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'User',
             },
         ],
-        // Dodaj druga polja ako su potrebna (npr. category, prerequisites, etc.)
+        lastResetDate: { // Datum poslednjeg resetovanja za dnevne misije
+            type: Date,
+            default: Date.now, // KLJUČNA PROMENA: Uvek inicijalizuj na trenutni datum
+        },
     },
     {
         timestamps: true,

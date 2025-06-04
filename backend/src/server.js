@@ -1,40 +1,51 @@
 // backend/src/server.js
+// Autor: Tvoje Ime
+// Datum: 03.06.2025.
+// Svrha: Glavni ulazni fajl za backend aplikaciju, postavlja server i rute.
+
 const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cors = require('cors');
+const dotenv = require('dotenv').config();
 const connectDB = require('./config/db');
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const missionRoutes = require('./routes/missionRoutes');
+const userRoutes = require('./routes/userRoutes');
+const reminderRoutes = require('./routes/reminderRoutes');
+const diaryRoutes = require('./routes/diaryRoutes');
+const activityRoutes = require('./routes/activityRoutes');
+const authRoutes = require('./routes/authRoutes'); // KLJUČNO: Uvezi authRoutes
+const cors = require('cors');
 
-dotenv.config(); // Učitaj .env promenljive što je ranije moguće
+const PORT = process.env.PORT || 5000;
 
-connectDB(); // Poveži se sa bazom podataka
+connectDB(); // Poveži se na bazu podataka
 
 const app = express();
 
-// Middleware
+// Middleware za parsiranje JSON tela zahteva
 app.use(express.json());
+
+// Middleware za parsiranje URL-encoded tela zahteva (ako je potrebno)
+app.use(express.urlencoded({ extended: false }));
+
+// Omogući CORS za sve rute (za razvoj)
 app.use(cors());
 
-// Definicija ruta
-const authRoutes = require('./routes/authRoutes');
-const missionRoutes = require('./routes/missionRoutes');
-const userRoutes = require('./routes/userRoutes');
-const diaryRoutes = require('./routes/diaryRoutes');
-const reminderRoutes = require('./routes/reminderRoutes');
-const activityRoutes = require('./routes/activityRoutes'); // DODATO: Uvezi activityRoutes
-
-app.use('/api/auth', authRoutes);
+// Definisanje ruta
 app.use('/api/missions', missionRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/diary', diaryRoutes);
+app.use('/api/user', userRoutes); // Za /api/user/profile
 app.use('/api/reminders', reminderRoutes);
-app.use('/api/activities', activityRoutes); // DODATO: Koristi activityRoutes
+app.use('/api/diary', diaryRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/auth', authRoutes); // KLJUČNO: Koristi authRoutes za /api/auth rute
 
-// Osnovna ruta
+
+// Ruta za testiranje (opciono)
 app.get('/', (req, res) => {
-    res.send('Fitness Quest API je pokrenut!');
+    res.send('API je pokrenut...');
 });
 
-const PORT = process.env.PORT || 5000;
+// Middleware za rukovanje greškama (mora biti na kraju)
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, () => console.log(`Server pokrenut na portu ${PORT}`));
