@@ -1,10 +1,10 @@
 // frontend/src/screens/DashboardScreen.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 12.05.2025.
 // Svrha: Glavni dashboard za prijavljenog korisnika, prikazuje XP, Avatar, Misije, Statistiku, Značke i Podsetnike sa savršenim poravnanjem koristeći Flexbox.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, CircularProgress, Alert, Paper, Container, Snackbar, List, ListItem, ListItemText, Button } from '@mui/material'; // Dodato Button
+import { Box, Typography, CircularProgress, Alert, Paper, Container, Snackbar, List, ListItem, ListItemText, Button } from '@mui/material'; 
 import MuiAlert from '@mui/material/Alert';
 import XPBar from '../components/XPBar';
 import AvatarDisplay from '../components/AvatarDisplay';
@@ -180,7 +180,7 @@ const DashboardScreen = () => {
       setSnackbarMessage(data.message || 'Dnevne misije resetovane!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      fetchUserData(); // Ponovo dohvati podatke da se osveži lista misija
+      fetchUserData(); 
     } catch (err) {
       console.error("Greška pri resetovanju dnevnih misija:", err);
       const errorMessage = err.response && err.response.data.message
@@ -226,7 +226,6 @@ const DashboardScreen = () => {
         Moj Dashboard
       </Typography>
 
-      {/* Dugme za resetovanje dnevnih misija */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, md: 4 } }}>
         <Button
           variant="contained"
@@ -238,21 +237,19 @@ const DashboardScreen = () => {
         </Button>
       </Box>
 
-      {/* Glavni Flex kontejner za sve sekcije */}
       <Box sx={{
         display: 'flex',
         flexDirection: 'column',
         gap: { xs: 2, md: 4 },
       }}>
 
-        {/* Prvi red: Avatar/XP i Misije */}
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
           gap: { xs: 2, md: 4 },
           alignItems: 'stretch',
         }}>
-          {/* Avatar/XP kartica */}
+
           <Box sx={{
             flex: { xs: '1 1 100%', md: '0 0 33.33%' },
             display: 'flex',
@@ -285,7 +282,6 @@ const DashboardScreen = () => {
             </Paper>
           </Box>
 
-          {/* Misije kartica */}
           <Box sx={{
             flex: { xs: '1 1 100%', md: '1 1 66.66%' },
             display: 'flex',
@@ -319,14 +315,12 @@ const DashboardScreen = () => {
           </Box>
         </Box>
 
-        {/* Drugi red: Značke i Nadolazeći Podsetnici */}
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
           gap: { xs: 2, md: 4 },
           alignItems: 'stretch',
         }}>
-          {/* Značke kartica */}
           <Box sx={{
             flex: { xs: '1 1 100%', md: '1 1 50%' },
             display: 'flex',
@@ -351,14 +345,13 @@ const DashboardScreen = () => {
                   ))
                 ) : (
                   <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
-                    Još uvek nema osvojenih znački. Kompletirajte misije!
+                    Još uvek nema osvojenih znački. Završite misije!
                   </Typography>
                 )}
               </Box>
             </Paper>
           </Box>
 
-          {/* Nadolazeći Podsetnici kartica */}
           <Box sx={{
             flex: { xs: '1 1 100%', md: '1 1 50%' },
             display: 'flex',
@@ -392,7 +385,6 @@ const DashboardScreen = () => {
           </Box>
         </Box>
 
-        {/* Treći red: Statistika (puna širina) */}
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -402,7 +394,6 @@ const DashboardScreen = () => {
         </Box>
       </Box>
 
-      {/* Snackbar za obaveštenja */}
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <MuiAlert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%', borderRadius: '8px', background: theme.palette.background.paper, color: theme.palette.text.primary }}>
           {snackbarMessage}

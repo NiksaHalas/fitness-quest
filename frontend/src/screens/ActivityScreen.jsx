@@ -1,9 +1,9 @@
 // frontend/src/screens/ActivityScreen.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 12.05.2025.
 // Svrha: Stranica za upravljanje fizičkim aktivnostima korisnika sa modernim tamnim dizajnom.
 
-// ISPRAVLJENO: '=>' promenjeno u 'from'
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -24,7 +24,7 @@ import {
   DialogContent,
   DialogActions,
   Snackbar,
-  MenuItem, // Za Select/Dropdown
+  MenuItem, 
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -33,21 +33,21 @@ import axios from 'axios';
 import { format, parseISO } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 
-// Pomoćna komponenta za prikaz pojedinačne aktivnosti (dodatno stilizovana)
+
 const ActivityItem = ({ activity, onEdit, onDelete }) => {
   const theme = useTheme();
   const formattedDate = format(parseISO(activity.date), 'dd.MM.yyyy. HH:mm');
 
   return (
     <ListItem divider sx={{
-      mb: 1.5, // Povećan razmak između stavki
-      borderRadius: '12px', // Još zaobljenije ivice
-      backgroundColor: 'rgba(255,255,255,0.05)', // Suptilna pozadina
-      border: '1px solid rgba(255,255,255,0.08)', // Obrub
+      mb: 1.5, 
+      borderRadius: '12px', 
+      backgroundColor: 'rgba(255,255,255,0.05)', 
+      border: '1px solid rgba(255,255,255,0.08)', 
       transition: 'all 0.2s ease-in-out',
       '&:hover': {
         backgroundColor: 'rgba(255,255,255,0.08)',
-        transform: 'translateY(-2px)', // Blagi hover efekat
+        transform: 'translateY(-2px)', 
         boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
       },
       '&:last-child': { mb: 0 },
@@ -72,7 +72,7 @@ const ActivityItem = ({ activity, onEdit, onDelete }) => {
           </>
         }
       />
-      <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.5, sm: 1 } }}> {/* Responzivni raspored dugmadi */}
+      <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.5, sm: 1 } }}> 
         <IconButton edge="end" aria-label="edit" onClick={() => onEdit(activity)} sx={{ color: theme.palette.primary.main }}>
           <EditIcon />
         </IconButton>
@@ -295,7 +295,7 @@ const ActivityScreen = () => {
         )}
       </Paper>
 
-      {/* Dialog za dodavanje/editovanje aktivnosti */}
+  
       <Dialog open={openDialog} onClose={handleCloseDialog} PaperProps={{ sx: { borderRadius: '16px', background: theme.palette.background.paper, border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)' } }}>
         <DialogTitle sx={{ color: theme.palette.primary.light, fontWeight: 'bold' }}>{currentActivity ? 'Uredi Aktivnost' : 'Dodaj Novu Aktivnost'}</DialogTitle>
         <DialogContent>
@@ -393,7 +393,6 @@ const ActivityScreen = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Snackbar za obaveštenja */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}

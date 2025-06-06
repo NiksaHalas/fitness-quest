@@ -1,10 +1,10 @@
 // backend/src/server.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 10.05.2025.
 // Svrha: Glavni ulazni fajl za backend aplikaciju, postavlja server i rute.
 
+const dotenv = require('dotenv').config(); 
 const express = require('express');
-const dotenv = require('dotenv').config();
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const missionRoutes = require('./routes/missionRoutes');
@@ -12,12 +12,15 @@ const userRoutes = require('./routes/userRoutes');
 const reminderRoutes = require('./routes/reminderRoutes');
 const diaryRoutes = require('./routes/diaryRoutes');
 const activityRoutes = require('./routes/activityRoutes');
-const authRoutes = require('./routes/authRoutes'); // KLJUČNO: Uvezi authRoutes
+const authRoutes = require('./routes/authRoutes');
 const cors = require('cors');
 
 const PORT = process.env.PORT || 5000;
 
-connectDB(); // Poveži se na bazu podataka
+// Ovo sprečava dvostruko povezivanje tokom testiranja
+if (require.main === module) {
+    connectDB();
+}
 
 const app = express();
 
@@ -32,14 +35,13 @@ app.use(cors());
 
 // Definisanje ruta
 app.use('/api/missions', missionRoutes);
-app.use('/api/user', userRoutes); // Za /api/user/profile
+app.use('/api/user', userRoutes); 
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api/activities', activityRoutes);
-app.use('/api/auth', authRoutes); // KLJUČNO: Koristi authRoutes za /api/auth rute
+app.use('/api/auth', authRoutes); 
 
 
-// Ruta za testiranje (opciono)
 app.get('/', (req, res) => {
     res.send('API je pokrenut...');
 });
@@ -48,4 +50,8 @@ app.get('/', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => console.log(`Server pokrenut na portu ${PORT}`));
+if (require.main === module) {
+    app.listen(PORT, () => console.log(`Server pokrenut na portu ${PORT}`));
+}
+
+module.exports = app;

@@ -1,10 +1,10 @@
 // backend/src/routes/authRoutes.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 10.05.2025.
 // Svrha: Rute za autentifikaciju korisnika (registracija i prijava).
 
 const express = require('express');
-const { loginUser, registerUser } = require('../controllers/authController'); // Uvezi funkcije iz authController
+const { loginUser, registerUser } = require('../controllers/authController'); 
 
 const router = express.Router();
 

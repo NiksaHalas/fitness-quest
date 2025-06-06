@@ -1,6 +1,6 @@
 // backend/src/models/Badge.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 08.05.2025.
 // Svrha: Mongoose model za značke (Achievements).
 
 const mongoose = require('mongoose');
@@ -16,21 +16,21 @@ const badgeSchema = mongoose.Schema(
             type: String,
             required: true,
         },
-        imageUrl: { // URL ili referenca na SVG ikonu (može biti i prazno ako je inline SVG)
+        imageUrl: {
             type: String,
             required: false,
         },
-        requiredLevel: { // Nivo koji je potreban za ovu značku
+        requiredLevel: { 
             type: Number,
-            required: false, // Neke značke možda nisu vezane za nivo
+            required: false, 
             default: 0,
         },
-        requiredMissions: { // Broj završenih misija za ovu značku
+        requiredMissions: { 
             type: Number,
             required: false,
             default: 0,
         },
-        // Mogu se dodati i drugi kriterijumi za značke (npr. requiredActivities, etc.)
+        
     },
     {
         timestamps: true,

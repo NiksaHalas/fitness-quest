@@ -1,6 +1,6 @@
 // backend/src/controllers/missionController.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 07.05.2025.
 // Svrha: Kontroleri za upravljanje misijama i logikom kompletiranja, uključujući automatsko i manuelno resetovanje dnevnih misija.
 
 const asyncHandler = require('express-async-handler');
@@ -23,11 +23,9 @@ const autoResetDailyMissions = async () => {
     let resetCount = 0;
 
     for (const mission of missionsToConsider) {
-        // Proveri da li misija NIJE resetovana danas (početak dana)
-        // Ako je lastResetDate null, ili je pre početka današnjeg dana
         if (!mission.lastResetDate || startOfDay(mission.lastResetDate).getTime() !== todayStart.getTime()) {
-            mission.completedBy = []; // Isprazni completedBy niz
-            mission.lastResetDate = todayStart; // Postavi datum resetovanja na početak današnjeg dana
+            mission.completedBy = []; 
+            mission.lastResetDate = todayStart; 
             await mission.save();
             resetCount++;
             console.log(`[DEBUG] Automatski resetovana misija: ${mission.name}`);
@@ -40,22 +38,15 @@ const autoResetDailyMissions = async () => {
     }
 };
 
-// @desc    Get all missions
-// @route   GET /api/missions
-// @access  Private
-const getMissions = asyncHandler(async (req, res) => {
-    // KLJUČNA PROMENA: Automatski resetuj dnevne misije pre nego što ih vratiš
-    await autoResetDailyMissions();
 
+const getMissions = asyncHandler(async (req, res) => {
+    await autoResetDailyMissions();
     const missions = await Mission.find({});
-    // Dodatno logovanje za debagovanje isDaily statusa
     missions.forEach(m => console.log(`[DEBUG] Misija: ${m.name}, isDaily: ${m.isDaily}, completedBy: ${m.completedBy.length > 0 ? 'true' : 'false'}`));
     res.json(missions);
 });
 
-// @desc    Complete a mission
-// @route   POST /api/missions/complete/:id
-// @access  Private
+
 const completeMission = asyncHandler(async (req, res) => {
     const missionId = req.params.id;
     const userId = req.user.id;
@@ -78,7 +69,7 @@ const completeMission = asyncHandler(async (req, res) => {
     }
     console.log(`[DEBUG] User found: ${user.username}, current XP: ${user.xp}, level: ${user.level}`);
 
-    // Proveri da li je misija već kompletirana od strane ovog korisnika
+    // Proveri da li je misija već izvrsena od strane ovog korisnika
     if (mission.completedBy && mission.completedBy.includes(userId)) {
         console.warn(`[DEBUG] Mission ${missionId} already completed by user ${userId}`);
         res.status(400);
@@ -86,11 +77,10 @@ const completeMission = asyncHandler(async (req, res) => {
     }
     console.log(`[DEBUG] Mission not yet completed by user. Proceeding.`);
 
-    // Ažuriraj misiju: dodaj korisnika u completedBy
+    // Ažuriraj misiju: dodavanje korisnika u completedBy
     mission.completedBy.push(userId);
-    // Ako je dnevna misija, ažuriraj lastResetDate na trenutno vreme
     if (mission.isDaily) {
-        mission.lastResetDate = new Date(); // Postavi na trenutno vreme, tako da se automatski resetuje sutradan
+        mission.lastResetDate = new Date();
         console.log(`[DEBUG] Daily mission completed, updating lastResetDate to: ${mission.lastResetDate}`);
     }
     await mission.save();
@@ -170,12 +160,10 @@ const completeMission = asyncHandler(async (req, res) => {
     console.log(`[DEBUG] Response sent.`);
 });
 
-// @desc    Reset daily missions (manuelno, za demo)
-// @route   POST /api/missions/reset-daily
-// @access  Private (or Admin) - for now, accessible to any logged-in user for demo
+
 const resetDailyMissions = asyncHandler(async (req, res) => {
     console.log(`[DEBUG] Pokrećem manuelno resetovanje dnevnih misija.`);
-    const missionsToReset = await Mission.find({ isDaily: true }); // Pronađi SVE dnevne misije
+    const missionsToReset = await Mission.find({ isDaily: true }); 
 
     if (missionsToReset.length === 0) {
         console.log(`[DEBUG] Nema dnevnih misija za manuelno resetovanje.`);
@@ -184,8 +172,8 @@ const resetDailyMissions = asyncHandler(async (req, res) => {
 
     let resetCount = 0;
     for (const mission of missionsToReset) {
-        mission.completedBy = []; // Bezuslovno isprazni completedBy
-        mission.lastResetDate = null; // KLJUČNA PROMENA: Postavi datum resetovanja na NULL za forsirano resetovanje
+        mission.completedBy = []; 
+        mission.lastResetDate = null; 
         await mission.save();
         resetCount++;
         console.log(`[DEBUG] Manuelno resetovana misija: ${mission.name}, lastResetDate postavljen na NULL.`);

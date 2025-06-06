@@ -1,14 +1,12 @@
 // backend/src/controllers/reminderController.js
-// Autor: Tvoje Ime
-// Datum: 02.06.2025.
+// Programer: Nikša Halas
+// Datum: 07.05.2025.
 // Svrha: Kontroleri za upravljanje podsetnicima.
 
 const asyncHandler = require('express-async-handler');
 const Reminder = require('../models/Reminder');
 
-// @desc    Create a new reminder
-// @route   POST /api/reminders
-// @access  Private
+
 const createReminder = asyncHandler(async (req, res) => {
     const { title, description, dateTime } = req.body;
     const userId = req.user.id;
@@ -22,28 +20,22 @@ const createReminder = asyncHandler(async (req, res) => {
         userId,
         title,
         description,
-        dateTime: new Date(dateTime) // Konvertuj string u Date objekat
+        dateTime: new Date(dateTime) 
     });
 
     const reminder = await newReminder.save();
     res.status(201).json(reminder);
 });
 
-// @desc    Get all reminders for a user
-// @route   GET /api/reminders
-// @access  Private
+
 const getReminders = asyncHandler(async (req, res) => {
     const userId = req.user.id;
 
-    // Dohvati podsetnike, sortiraj po datumu/vremenu uzlazno (najraniji prvi)
-    // Možeš dodati filter za isCompleted: false ako želiš samo aktivne podsetnike
     const reminders = await Reminder.find({ userId }).sort({ dateTime: 1 });
     res.status(200).json(reminders);
 });
 
-// @desc    Update a reminder (e.g., mark as completed)
-// @route   PUT /api/reminders/:id
-// @access  Private
+
 const updateReminder = asyncHandler(async (req, res) => {
     const { title, description, dateTime, isCompleted } = req.body;
     const reminderId = req.params.id;
@@ -56,7 +48,7 @@ const updateReminder = asyncHandler(async (req, res) => {
         throw new Error('Podsetnik nije pronađen.');
     }
 
-    // Proveri da li korisnik poseduje podsetnik
+
     if (reminder.userId.toString() !== userId.toString()) {
         res.status(401);
         throw new Error('Niste autorizovani da ažurirate ovaj podsetnik.');
@@ -71,9 +63,7 @@ const updateReminder = asyncHandler(async (req, res) => {
     res.status(200).json(updatedReminder);
 });
 
-// @desc    Delete a reminder
-// @route   DELETE /api/reminders/:id
-// @access  Private
+
 const deleteReminder = asyncHandler(async (req, res) => {
     const reminderId = req.params.id;
     const userId = req.user.id;
@@ -85,13 +75,12 @@ const deleteReminder = asyncHandler(async (req, res) => {
         throw new Error('Podsetnik nije pronađen.');
     }
 
-    // Proveri da li korisnik poseduje podsetnik
     if (reminder.userId.toString() !== userId.toString()) {
         res.status(401);
         throw new Error('Niste autorizovani da obrišete ovaj podsetnik.');
     }
 
-    await reminder.deleteOne(); // Koristi deleteOne() za brisanje dokumenta
+    await reminder.deleteOne(); 
     res.status(200).json({ message: 'Podsetnik uspešno obrisan.' });
 });
 

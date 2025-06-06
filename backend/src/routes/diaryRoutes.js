@@ -1,6 +1,6 @@
 // backend/src/routes/diaryRoutes.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 10.05.2025.
 // Svrha: Rute za upravljanje unosima u dnevnik.
 
 const express = require('express');

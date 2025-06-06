@@ -1,15 +1,13 @@
 // backend/src/controllers/authController.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 07.05.2025.
 // Svrha: Kontroleri za autentifikaciju korisnika (registracija i prijava).
 
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
-// @access  Public
+
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
@@ -25,7 +23,6 @@ const loginUser = asyncHandler(async (req, res) => {
             token: generateToken(user._id),
             xp: user.xp,
             level: user.level,
-            // Popuni značke samo sa ID-jevima, detalji se popunjavaju na getUserProfile
             badges: user.badges,
             completedMissionsCount: user.completedMissionsCount,
         });
@@ -35,9 +32,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
+
 const registerUser = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 

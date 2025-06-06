@@ -1,4 +1,8 @@
 // backend/src/middleware/authMiddleware.js
+//Programer: Nikša Halas
+//Datum: 08.05.2025.
+//Svrha: Middleware za zaštitu ruta i autentifikaciju korisnika putem JWT tokena.
+
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');

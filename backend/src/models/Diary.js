@@ -1,40 +1,39 @@
 // backend/src/models/Diary.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
-// Svrha: Mongoose model za unos u dnevnik (Diary).
+// Programer: Nikša Halas
+// Datum: 08.05.2025.
+// Svrha: Mongoose model za unose u dnevnik (sa novim poljima: title, mood, notes).
 
 const mongoose = require('mongoose');
 
-const diarySchema = mongoose.Schema( // Promenjeno u diarySchema
+const diarySchema = mongoose.Schema(
     {
-        userId: {
+        user: {
             type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
             required: true,
-            ref: 'User', // Referencira User model
         },
-        title: {
+        title: { 
             type: String,
-            required: [true, 'Molimo dodajte naslov unosa'],
+            required: true,
         },
-        notes: {
-            type: String,
-            required: false, // Beleške nisu obavezne
-        },
-        mood: {
-            type: String,
-            required: [true, 'Molimo odaberite raspoloženje'],
-            enum: ['Odlično', 'Dobro', 'Neutralno', 'Loše', 'Užasno'], // Dozvoljene vrednosti raspoloženja
-        },
-        date: {
+        date: { 
             type: Date,
-            default: Date.now, // Podrazumevano trenutni datum i vreme
+            required: true,
+        },
+        mood: { 
+            type: String,
+            required: true,
+        },
+        notes: { 
+            type: String,
+            required: false,
         },
     },
     {
-        timestamps: true, // Automatski dodaj createdAt i updatedAt polja
+        timestamps: true,
     }
 );
 
-const Diary = mongoose.model('Diary', diarySchema); // Promenjeno u Diary model
+const Diary = mongoose.model('Diary', diarySchema);
 
 module.exports = Diary;

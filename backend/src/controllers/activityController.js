@@ -1,14 +1,12 @@
 // backend/src/controllers/activityController.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 07.05.2025.
 // Svrha: Kontroleri za upravljanje aktivnostima.
 
 const asyncHandler = require('express-async-handler');
-const Activity = require('../models/Activity'); // Uvezi Activity model
+const Activity = require('../models/Activity'); 
 
-// @desc    Create a new activity
-// @route   POST /api/activities
-// @access  Private
+
 const createActivity = asyncHandler(async (req, res) => {
     const { name, activityType, duration, caloriesBurned, intensity, date } = req.body;
     const userId = req.user.id;
@@ -25,16 +23,14 @@ const createActivity = asyncHandler(async (req, res) => {
         duration,
         caloriesBurned,
         intensity,
-        date: date || Date.now() // Omogući slanje datuma, inače koristi trenutni
+        date: date || Date.now() 
     });
 
     const activity = await newActivity.save();
     res.status(201).json(activity);
 });
 
-// @desc    Get all activities for a user
-// @route   GET /api/activities
-// @access  Private
+
 const getActivities = asyncHandler(async (req, res) => {
     const userId = req.user.id;
 
@@ -43,9 +39,7 @@ const getActivities = asyncHandler(async (req, res) => {
     res.status(200).json(activities);
 });
 
-// @desc    Update an activity
-// @route   PUT /api/activities/:id
-// @access  Private
+
 const updateActivity = asyncHandler(async (req, res) => {
     const { name, activityType, duration, caloriesBurned, intensity, date } = req.body;
     const activityId = req.params.id;
@@ -75,9 +69,7 @@ const updateActivity = asyncHandler(async (req, res) => {
     res.status(200).json(updatedActivity);
 });
 
-// @desc    Delete an activity
-// @route   DELETE /api/activities/:id
-// @access  Private
+
 const deleteActivity = asyncHandler(async (req, res) => {
     const activityId = req.params.id;
     const userId = req.user.id;

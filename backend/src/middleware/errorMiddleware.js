@@ -1,6 +1,6 @@
 // backend/src/middleware/errorMiddleware.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 08.05.2025.
 // Svrha: Middleware za centralizovano rukovanje greškama u Express.js aplikaciji.
 
 const notFound = (req, res, next) => {

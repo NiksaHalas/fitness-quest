@@ -1,6 +1,6 @@
 // frontend/src/screens/LoginScreen.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 13.05.2025.
 // Svrha: Stranica za prijavu korisnika sa modernim tamnim dizajnom.
 
 import React, { useState, useEffect } from 'react';
@@ -60,7 +60,7 @@ const LoginScreen = ({ setIsLoggedIn }) => {
     <Container
       maxWidth="xs"
       sx={{
-        mt: { xs: 4, md: 8 }, // Responzivni top margin
+        mt: { xs: 4, md: 8 },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -71,15 +71,15 @@ const LoginScreen = ({ setIsLoggedIn }) => {
       <Paper
         elevation={6}
         sx={{
-          p: { xs: 3, md: 5 }, // Responzivni padding
+          p: { xs: 3, md: 5 }, 
           borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           width: '100%',
-          background: theme.palette.background.paper, // Koristi boju pozadine papira iz teme
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)', // Tamnija senka
-          border: '1px solid rgba(255, 255, 255, 0.05)', // Suptilni obrub
+          background: theme.palette.background.paper, 
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)', 
+          border: '1px solid rgba(255, 255, 255, 0.05)', 
         }}
       >
         <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 3, color: theme.palette.primary.light, fontWeight: 700 }}>
@@ -89,7 +89,7 @@ const LoginScreen = ({ setIsLoggedIn }) => {
           Prijavite se da nastavite svoju Fitness Quest avanturu.
         </Typography>
         {error && <Alert severity="error" sx={{ mb: 2, width: '100%', borderRadius: '8px' }}>{error}</Alert>}
-        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}><CircularProgress color="secondary" /></Box>} {/* Boja loading kruga */}
+        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}><CircularProgress color="secondary" /></Box>} 
         <Box component="form" onSubmit={submitHandler} sx={{ mt: 1, width: '100%' }}>
           <TextField
             margin="normal"

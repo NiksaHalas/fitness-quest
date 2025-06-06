@@ -1,6 +1,6 @@
 // frontend/src/components/BadgeDisplay.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 11.05.2025.
 // Svrha: Prikazuje pojedinačnu značku sa modernim dizajnom i inline SVG ikonama.
 
 import React from 'react';
@@ -12,8 +12,8 @@ const BadgeDisplay = ({ badge }) => {
 
   // Funkcija koja vraća SVG za značku na osnovu njenog imena/tipa
   const getBadgeSvg = (badgeName) => {
-    const baseColor = theme.palette.secondary.main; // Tirkizna boja
-    const accentColor = theme.palette.primary.main; // Ljubičasta boja
+    const baseColor = theme.palette.secondary.main; 
+    const accentColor = theme.palette.primary.main; 
 
     switch (badgeName) {
       case 'Prvi Koraci':
@@ -33,7 +33,7 @@ const BadgeDisplay = ({ badge }) => {
             <circle cx="20" cy="80" r="10" fill={accentColor} />
           </svg>
         );
-      case 'Nivo 5 Dostignut': // Primer značke za nivo
+      case 'Nivo 5 Dostignut': 
         return (
           <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <polygon points="50 5, 95 40, 80 95, 20 95, 5 40" fill={accentColor} opacity="0.8" />
@@ -41,7 +41,6 @@ const BadgeDisplay = ({ badge }) => {
             <circle cx="50" cy="25" r="10" fill="white" />
           </svg>
         );
-      // Dodaj više case-ova za različite značke
       default:
         return (
           <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -74,7 +73,7 @@ const BadgeDisplay = ({ badge }) => {
       flexShrink: 0,
     }}>
       <Box sx={{ width: 50, height: 50, borderRadius: '50%', border: `2px solid ${theme.palette.secondary.main}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        {getBadgeSvg(badge.name)} {/* Prikazujemo SVG */}
+        {getBadgeSvg(badge.name)} 
       </Box>
       <Typography variant="caption" display="block" sx={{ mt: 0.8, fontWeight: 'medium', color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
         {badge.name}

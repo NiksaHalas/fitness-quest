@@ -1,6 +1,6 @@
 // frontend/src/screens/RegisterScreen.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 13.05.2025.
 // Svrha: Stranica za registraciju korisnika sa modernim tamnim dizajnom.
 
 import React, { useState, useEffect } from 'react';
@@ -53,9 +53,6 @@ const RegisterScreen = () => {
       );
 
       setSuccess('Registracija uspešna! Možete se sada prijaviti.');
-      // Opciono: automatska prijava nakon registracije
-      // localStorage.setItem('userInfo', JSON.stringify(data));
-      // navigate('/dashboard');
     } catch (err) {
       console.error("Greška pri registraciji:", err);
       setError(err.response && err.response.data.message
@@ -70,7 +67,7 @@ const RegisterScreen = () => {
     <Container
       maxWidth="xs"
       sx={{
-        mt: { xs: 4, md: 8 }, // Responzivni top margin
+        mt: { xs: 4, md: 8 },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -81,15 +78,15 @@ const RegisterScreen = () => {
       <Paper
         elevation={6}
         sx={{
-          p: { xs: 3, md: 5 }, // Responzivni padding
+          p: { xs: 3, md: 5 }, 
           borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           width: '100%',
-          background: theme.palette.background.paper, // Koristi boju pozadine papira iz teme
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)', // Tamnija senka
-          border: '1px solid rgba(255, 255, 255, 0.05)', // Suptilni obrub
+          background: theme.palette.background.paper, 
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.05)', 
         }}
       >
         <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 3, color: theme.palette.primary.light, fontWeight: 700 }}>

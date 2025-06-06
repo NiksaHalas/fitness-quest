@@ -1,11 +1,11 @@
 // backend/src/routes/missionRoutes.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 10.05.2025.
 // Svrha: Rute za upravljanje misijama, uključujući resetovanje dnevnih misija.
 
 const express = require('express');
-const { getMissions, completeMission, resetDailyMissions } = require('../controllers/missionController'); // KLJUČNO: Uvezi resetDailyMissions
-const protect = require('../middleware/authMiddleware'); // Za zaštitu ruta
+const { getMissions, completeMission, resetDailyMissions } = require('../controllers/missionController'); 
+const protect = require('../middleware/authMiddleware'); 
 const router = express.Router();
 
 // Ruta za dohvatanje svih misija

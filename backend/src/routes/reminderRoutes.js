@@ -1,11 +1,11 @@
 // backend/src/routes/reminderRoutes.js
-// Autor: Tvoje Ime
-// Datum: 02.06.2025.
+// Programer: Nikša Halas
+// Datum: 10.05.2025.
 // Svrha: Rute za upravljanje podsetnicima.
 
 const express = require('express');
 const { createReminder, getReminders, updateReminder, deleteReminder } = require('../controllers/reminderController');
-const protect = require('../middleware/authMiddleware'); // Za zaštitu ruta
+const protect = require('../middleware/authMiddleware'); 
 const router = express.Router();
 
 // Ruta za kreiranje novog podsetnika

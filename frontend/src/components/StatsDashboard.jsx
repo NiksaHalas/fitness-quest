@@ -1,10 +1,10 @@
 // frontend/src/components/StatsDashboard.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 11.05.2025.
 // Svrha: Prikazuje statistiku korisnika, XP progres, i grafove aktivnosti/raspoloženja sa savršenim poravnanjem.
 
 import React from 'react';
-import { Typography, Paper, Box } from '@mui/material'; // DODATO: Box za flexbox
+import { Typography, Paper, Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar
@@ -60,22 +60,20 @@ const StatsDashboard = ({ userData, activities, diaryEntries }) => {
   const moodData = aggregateMoods(diaryEntries);
 
   return (
-    <Paper sx={{ p: { xs: 2, md: 3 }, flexGrow: 1 }}> {/* Paper za celu statističku sekciju */}
+    <Paper sx={{ p: { xs: 2, md: 3 }, flexGrow: 1 }}> 
       <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.primary.light, mb: { xs: 2, md: 3 } }}>
         Statistika Napretka
       </Typography>
 
-      {/* Flex kontejner za statističke kartice i grafove */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, md: 3 }, justifyContent: 'center', alignItems: 'stretch' }}> {/* Promenjeno u Box */}
-        {/* Stavka za Ukupno XP */}
-        <Box sx={{ flex: { xs: '1 1 100%', sm: '0 0 calc(50% - 12px)', md: '0 0 calc(33.33% - 16px)' } }}> {/* Prilagođene širine */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, md: 3 }, justifyContent: 'center', alignItems: 'stretch' }}> 
+        <Box sx={{ flex: { xs: '1 1 100%', sm: '0 0 calc(50% - 12px)', md: '0 0 calc(33.33% - 16px)' } }}> 
           <Paper sx={{ p: { xs: 2, md: 3 }, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>Ukupno XP</Typography>
             <Typography variant="h4" sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>{userData?.xp || 0}</Typography>
           </Paper>
         </Box>
 
-        {/* Stavka za Trenutni Nivo */}
+   
         <Box sx={{ flex: { xs: '1 1 100%', sm: '0 0 calc(50% - 12px)', md: '0 0 calc(33.33% - 16px)' } }}>
           <Paper sx={{ p: { xs: 2, md: 3 }, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>Trenutni Nivo</Typography>
@@ -83,7 +81,7 @@ const StatsDashboard = ({ userData, activities, diaryEntries }) => {
           </Paper>
         </Box>
 
-        {/* Stavka za Misije Kompletirane */}
+      
         <Box sx={{ flex: { xs: '1 1 100%', sm: '0 0 calc(50% - 12px)', md: '0 0 calc(33.33% - 16px)' } }}>
           <Paper sx={{ p: { xs: 2, md: 3 }, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>Misije Kompletirane</Typography>
@@ -93,7 +91,7 @@ const StatsDashboard = ({ userData, activities, diaryEntries }) => {
           </Paper>
         </Box>
 
-        {/* Stavka za Graf Trajanja Aktivnosti */}
+     
         <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(50% - 16px)' } }}>
           <Paper sx={{ p: { xs: 2, md: 3 }, height: 350, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary, mb: 2 }}>
@@ -122,14 +120,14 @@ const StatsDashboard = ({ userData, activities, diaryEntries }) => {
           </Paper>
         </Box>
 
-        {/* Stavka za Graf Raspoloženja */}
+
         <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(50% - 16px)' } }}>
           <Paper sx={{ p: { xs: 2, md: 3 }, height: 350, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary, mb: 2 }}>
               Raspoloženje
             </Typography>
             {moodData.length > 0 && moodData.some(m => m.count > 0) ? (
-              <ResponsiveContainer width="100%" height="100%"> {/* KLJUČNA PROMENA: height="100%" */}
+              <ResponsiveContainer width="100%" height="100%"> 
                 <BarChart data={moodData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="mood" stroke={theme.palette.text.secondary} />

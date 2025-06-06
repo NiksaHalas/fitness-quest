@@ -1,6 +1,6 @@
 // backend/src/models/User.js
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Nikša Halas
+// Datum: 08.05.2025.
 // Svrha: Mongoose model za korisnika sa XP-om, nivoom, značkama i brojačem misija.
 
 const mongoose = require('mongoose');
@@ -33,17 +33,17 @@ const userSchema = mongoose.Schema(
         badges: [
             {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Badge', // Referencira Badge model
+                ref: 'Badge', 
             },
         ],
-        completedMissionsCount: { // Dodato za statistiku
+        completedMissionsCount: { 
             type: Number,
             default: 0,
         },
-        // Dodaj druga polja ako su potrebna (npr. avatar_url, goals, etc.)
+        
     },
     {
-        timestamps: true, // Automatski dodaje createdAt i updatedAt
+        timestamps: true, 
     }
 );
 

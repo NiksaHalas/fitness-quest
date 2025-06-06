@@ -1,6 +1,6 @@
 // backend/src/models/Reminder.js
-// Autor: Tvoje Ime
-// Datum: 02.06.2025.
+// Programer: Nikša Halas
+// Datum: 08.05.2025.
 // Svrha: Model za podsetnike korisnika.
 
 const mongoose = require('mongoose');
@@ -11,34 +11,26 @@ const ReminderSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    title: { // Npr. "Podsetnik za trčanje", "Podsetnik za jogu"
+    title: { 
         type: String,
         required: true,
         maxlength: 100
     },
-    description: { // Dodatni opis podsetnika
+    description: { 
         type: String,
         maxlength: 500
     },
-    dateTime: { // Datum i vreme podsetnika
+    dateTime: { 
         type: Date,
         required: true
     },
-    isCompleted: { // Da li je podsetnik "odrađen"
+    isCompleted: { 
         type: Boolean,
         default: false
     },
-    // Opciono: Polja za ponavljanje podsetnika (npr. daily, weekly)
-    // repeat: {
-    //     type: String,
-    //     enum: ['none', 'daily', 'weekly', 'monthly'],
-    //     default: 'none'
-    // },
-    // lastTriggered: { // Poslednji put kada je podsetnik "aktiviran"
-    //     type: Date
-    // }
+ 
 }, {
-    timestamps: true // Dodaje createdAt i updatedAt
+    timestamps: true
 });
 
 module.exports = mongoose.model('Reminder', ReminderSchema);

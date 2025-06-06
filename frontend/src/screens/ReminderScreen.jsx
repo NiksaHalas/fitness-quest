@@ -1,6 +1,6 @@
 // frontend/src/screens/ReminderScreen.jsx
-// Autor: Tvoje Ime
-// Datum: 03.06.2025.
+// Programer: Andrija Vulešević
+// Datum: 13.05.2025.
 // Svrha: Stranica za upravljanje podsetnicima (kreiranje, pregled, ažuriranje, brisanje) sa modernim tamnim dizajnom.
 
 import React, { useState, useEffect } from 'react';
@@ -34,21 +34,20 @@ import axios from 'axios';
 import { format, parseISO } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 
-// Pomoćna komponenta za prikaz pojedinačnog podsetnika (dodatno stilizovana)
 const ReminderItem = ({ reminder, onEdit, onDelete, onToggleComplete }) => {
   const theme = useTheme();
   const formattedDateTime = format(parseISO(reminder.dateTime), 'dd.MM.yyyy. HH:mm');
 
   return (
     <ListItem divider sx={{
-      mb: 1.5, // Povećan razmak između stavki
-      borderRadius: '12px', // Još zaobljenije ivice
-      backgroundColor: reminder.isCompleted ? 'rgba(3, 218, 198, 0.08)' : 'rgba(255,255,255,0.05)', // Suptilna pozadina, svetlija za kompletirane
-      border: `1px solid ${reminder.isCompleted ? theme.palette.secondary.main : 'rgba(255,255,255,0.08)'}`, // Obrub
+      mb: 1.5,
+      borderRadius: '12px', 
+      backgroundColor: reminder.isCompleted ? 'rgba(3, 218, 198, 0.08)' : 'rgba(255,255,255,0.05)', 
+      border: `1px solid ${reminder.isCompleted ? theme.palette.secondary.main : 'rgba(255,255,255,0.08)'}`, 
       transition: 'all 0.2s ease-in-out',
       '&:hover': {
         backgroundColor: reminder.isCompleted ? 'rgba(3, 218, 198, 0.12)' : 'rgba(255,255,255,0.08)',
-        transform: 'translateY(-2px)', // Blagi hover efekat
+        transform: 'translateY(-2px)', 
         boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
       },
       '&:last-child': { mb: 0 },
@@ -74,7 +73,7 @@ const ReminderItem = ({ reminder, onEdit, onDelete, onToggleComplete }) => {
           </>
         }
       />
-      <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.5, sm: 1 } }}> {/* Responzivni raspored dugmadi */}
+      <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.5, sm: 1 } }}> 
         <IconButton edge="end" aria-label="toggle-complete" onClick={() => onToggleComplete(reminder._id, !reminder.isCompleted)} sx={{ color: reminder.isCompleted ? theme.palette.secondary.main : theme.palette.text.secondary }}>
           {reminder.isCompleted ? <CheckCircleOutlineIcon /> : <RadioButtonUncheckedIcon />}
         </IconButton>
@@ -102,7 +101,7 @@ const ReminderScreen = () => {
   const [currentReminder, setCurrentReminder] = useState(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [dateTime, setDateTime] = useState(''); // Definisanje dateTime i setDateTime
+  const [dateTime, setDateTime] = useState(''); 
 
   const fetchReminders = async () => {
     setLoading(true);
@@ -146,7 +145,7 @@ const ReminderScreen = () => {
     } else {
       setTitle('');
       setDescription('');
-      setDateTime(format(new Date(), "yyyy-MM-dd'T'HH:mm")); // KLJUČNA PROMENA: Koristi setDateTime
+      setDateTime(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     }
     setOpenDialog(true);
   };
@@ -306,7 +305,6 @@ const ReminderScreen = () => {
         )}
       </Paper>
 
-      {/* Dialog za dodavanje/editovanje podsetnika */}
       <Dialog open={openDialog} onClose={handleCloseDialog} PaperProps={{ sx: { borderRadius: '16px', background: theme.palette.background.paper, border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)' } }}>
         <DialogTitle sx={{ color: theme.palette.primary.light, fontWeight: 'bold' }}>{currentReminder ? 'Uredi Podsetnik' : 'Dodaj Novi Podsetnik'}</DialogTitle>
         <DialogContent>
@@ -359,7 +357,6 @@ const ReminderScreen = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Snackbar za obaveštenja */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
